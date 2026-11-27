@@ -65,7 +65,8 @@ Khi dữ liệu thưa hoặc thị trường biến động, dùng **tối thi�
 | 5b. Xếp hạng | Lấy **5 điểm gần nhất** sau lọc: mặc định **3 điểm đầu vào công thức** (ghim xanh 1-2-3), 2 điểm còn lại là tham khảo mở rộng (ghim xám). Người dùng bật/tắt từng điểm, tối thiểu 2 điểm | [Chủ dự án] |
 | 6. Trọng số | **W_i = 1 / (d_i² + 100)**, d tính bằng mét | [CĐC] |
 | 7. Đơn giá chuẩn | `base = Σ(W_i × std_i) / ΣW_i` | |
-| 8. Áp hệ số thửa mục tiêu | `unit = base × kDepth(D) × kShape` | |
+| 8. Áp hệ số thửa mục tiêu | `unit = base × kDepth(D) × kShape`. D = Diện tích / Mặt tiền khi có mặt tiền; chưa có mặt tiền thì `kDepth = 1` | |
+| 8b. Giá trị đất | `Đất = unit × (S_ở + S_vườn × 35%)`, xem 1.2 | [Chủ dự án] |
 | 9. Kiểm soát | Chênh lệch giữa mức giá đại diện và **từng** mức giá chỉ dẫn: ≤ 10% đạt; 10–15% cảnh báo; > 15% không đạt, phải loại điểm hoặc bổ sung mẫu | [GT 10%] / [CĐC 15%] |
 
 ```js
@@ -88,16 +89,24 @@ kDepth(D) = (min(D, 25) + k_deep × max(0, D − 25)) / D
 Ví dụ: D = 32 m, k = 0,6 → (25 + 0,6×7)/32 = **0,9125**.
 Excel: `=(MIN(D2,25)+0.6*MAX(0,D2-25))/D2`
 
-**Hình dáng:**
+**Hình dáng (hệ số cố định, thay khung cũ Nở hậu / Thóp hậu / Chữ L):** [Chủ dự án]
 
-| Hình dáng | Khung hệ số | Mặc định trong app |
+| Mã | Hình dáng | Hệ số |
 |---|---|---|
-| Vuông vắn | 1,00 | 1,00 |
-| Nở hậu | 1,03 – 1,05 | 1,03 |
-| Thóp hậu | 0,92 – 0,95 | 0,92 |
-| Chữ L / Đâm đường | 0,85 – 0,90 | 0,88 |
+| VU | Vuông | 1,00 |
+| KV | Không vuông | 0,98 |
+| KEM | Kém (méo, chữ L, đâm đường) | 0,90 |
 
-App mặc định lấy giá trị thận trọng. Người xử lý được chỉnh trong khung, ngoài khung bị chặn.
+Mã cũ trong tin nhắn `#SBG|...` được quy đổi: VU, NO → VU; TH → KV; LD → KEM.
+
+**Tỷ lệ đất ở & đất vườn:** [Chủ dự án]
+- Khách nhập Diện tích S và Tỷ lệ đất ở r (mặc định 100%, nút nhanh 100 / 80 / 50 / 30).
+- `S_ở = S × r`, `S_vườn = S × (1 − r)`.
+- Đất ở tính 100% đơn giá đất ở; đất vườn, phần còn lại tính **35%** đơn giá đất ở.
+- `Giá trị đất = unit × (S_ở + 0,35 × S_vườn)`.
+- Dính hành lang: diện tích trừ hành lang trừ vào đất ở trước, thừa mới trừ vào vườn (thận trọng).
+- Ví dụ: S = 200, r = 80%, unit = 41,17 → 41,17 × (160 + 0,35 × 40) = 41,17 × 174 = **7.164 tr**.
+- Excel: `=Unit*(S*r+0.35*S*(1-r))`
 
 ### 1.3 Nguyên tắc điều chỉnh từng yếu tố [GT tr.77–92]
 
@@ -221,7 +230,8 @@ Chi tiết hạng mục và ví dụ: `quy-tac-tinh-gia.md`.
 - [ ] Tọa độ nằm trong Nghệ An – Hà Tĩnh; loại đường đúng thực tế.
 - [ ] Có ít nhất 3 điểm đối chiếu sau lọc; ghi rõ có nới bán kính hoặc mượn đường hay không.
 - [ ] Kiểm soát chênh lệch ≤ 15% (lý tưởng ≤ 10%).
-- [ ] Phần sâu > 25 m đã chiết giảm; hình dáng nằm trong khung hệ số.
+- [ ] Phần sâu > 25 m đã chiết giảm (khi có mặt tiền); hình dáng đúng 1 trong 3 mức 1,00 / 0,98 / 0,90.
+- [ ] Tỷ lệ đất ở khớp giấy chứng nhận; phần vườn tính 35% đơn giá đất ở.
 - [ ] Công trình đã trừ hao mòn; đơn giá xây mới nằm trong khung.
 - [ ] Nếu dùng Trụ cột 3 hoặc 4: lệch so với Trụ cột 1 không quá ±20%.
 - [ ] Quy hoạch: ghi trạng thái; nếu dính hành lang, đã trừ diện tích.
@@ -240,9 +250,14 @@ Chi tiết hạng mục và ví dụ: `quy-tac-tinh-gia.md`.
 - Dự phòng: tự chuyển sang Esri World Imagery / OpenStreetMap khi tile Google lỗi; có nút "Dự phòng" để chuyển tay.
 - Cảnh báo pháp lý: gọi tile `mt1.google.com` trực tiếp không nằm trong điều khoản Google Maps Platform và có thể bị chặn bất kỳ lúc nào.
 
-**Chọn vị trí tra cứu**
-- Chạm bản đồ, kéo ghim cam, bấm GPS, dán link hoặc nhập tọa độ. Cả năm cách đều cập nhật ô Lat/Lng và tính lại giá ngay.
-- **Thẻ tọa độ nổi** phía trên bản đồ hiện Lat, Lng, nguồn cập nhật kèm giờ, và có nút Copy.
+**Hai bản đồ**
+
+| Bản đồ | Nơi dùng | Nội dung |
+|---|---|---|
+| Bản đồ khách | Bước 1, nút "Chạm chọn ghim trên bản đồ" | Ghim cam kéo/chạm để chọn vị trí; ghim kho dữ liệu tô theo loại đường. Popup chỉ có khu vực và loại đường, **không hiện đơn giá** (tránh lộ kho giá miễn phí) |
+| Bản đồ quản trị | Tab Quản trị, mục 2 | Ghim kho dữ liệu tô theo loại đường hoặc khung giá, popup có đơn giá; ghim xanh 1-2-3 nối nét đứt; ghim xám tham khảo; kéo ghim cam để đổi tọa độ ca |
+
+**Thẻ tọa độ nổi** trên bản đồ khách hiện Lat, Lng, nguồn cập nhật kèm giờ, có nút Copy.
 
 **Quy ước màu ghim**
 
@@ -252,15 +267,11 @@ Chi tiết hạng mục và ví dụ: `quy-tac-tinh-gia.md`.
 | Xanh dương đánh số 1-2-3 | Điểm dữ liệu đối chiếu đưa vào công thức. Có nét đứt nối từ ghim cam |
 | Xám | Điểm tham khảo mở rộng (trong 5 điểm gần nhất, không đưa vào công thức) |
 
-**Ghim kho dữ liệu** (toàn bộ điểm, có chú thích màu bên dưới bản đồ):
+**Ghim kho dữ liệu:**
 - Theo loại đường: Đỏ = loại 1, Cam = loại 2, Xanh dương = loại 3, Xanh lá = loại 4.
-- Theo khung giá: Xanh lá < 10 tr, Xanh dương 10–25 tr, Cam 25–50 tr, Đỏ > 50 tr.
-- Popup gồm: khu vực, loại đường, diện tích mẫu, đơn giá đất tham chiếu (tr/m²), ghi chú.
+- Theo khung giá (chỉ bản đồ quản trị): Xanh lá < 10 tr, Xanh dương 10–25 tr, Cam 25–50 tr, Đỏ > 50 tr.
 
-**Danh sách dưới bản đồ**
-- Thẻ "Vị trí tra cứu" (cam) đứng đầu.
-- Tiếp theo là 5 điểm dữ liệu đối chiếu, mỗi thẻ có khoảng cách tính bằng mét, loại đường và đơn giá.
-- Chạm vào thẻ để bật/tắt điểm; số thứ tự và khung giá được tính lại ngay.
+**Danh sách điểm (tab Quản trị):** 5 điểm gần nhất sau lọc kèm điểm bị loại nhiễu. Chạm thẻ để bật/tắt điểm, tối thiểu 2 điểm; số thứ tự, đơn giá gợi ý và ảnh Sodovitri tính lại theo lựa chọn.
 
 ## 7. Ảnh "Sơ đồ vị trí & khoảng cách" (`Sodovitri.png`)
 
@@ -280,19 +291,35 @@ Chi tiết hạng mục và ví dụ: `quy-tac-tinh-gia.md`.
 
 **Khoảng cách:** đường chim bay (Haversine), làm tròn đến mét.
 
-## 8. Gói dịch vụ
+## 8. Dịch vụ & luồng đặt yêu cầu (Wizard 4 bước)
 
-| Nhóm | Gói | Giá | Quyền lợi | Nội dung CK |
-|---|---|---|---|---|
-| A · Hội viên | 1 Tháng | 299.000đ | Tra tự động không giới hạn 30 ngày; giảm 15% gói Thông báo sơ bộ & Quy hoạch từ xa (còn 255.000đ) | `TBSB 1T [SĐT]` |
-| A · Hội viên | 3 Tháng (Phổ biến nhất) | 790.000đ | 90 ngày; tặng 01 lượt Thông báo sơ bộ & Quy hoạch từ xa | `TBSB 3T [SĐT]` |
-| A · Hội viên | 6 Tháng (Tiết kiệm 400k) | 1.390.000đ | 180 ngày; tặng 03 lượt; ưu tiên xử lý nhanh | `TBSB 6T [SĐT]` |
-| B · Gói lẻ | Tra nhanh tự động | 49.000đ/lượt | Khung giá tham chiếu và đối chiếu trên bản đồ ngay | `TBSB xxxx` |
-| B · Gói lẻ | Thông báo sơ bộ giá + Quy hoạch từ xa | 300.000đ/lượt | Mã `TBSB-XXXX`, VietQR động, nút Copy gửi Zalo | `TBSB XXXX` |
-| B · Gói lẻ | Khảo sát thực địa + Thông báo sơ bộ giá | 500.000đ/lượt | Như trên | `TBSB XXXX` |
+| Mã | Dịch vụ | Giá |
+|---|---|---|
+| `dg` | Định giá sơ bộ | 150.000đ |
+| `qh` | Check quy hoạch | 150.000đ |
+| `combo` | Combo Định giá + Check quy hoạch (Phổ biến nhất) | 300.000đ |
+| `ks` | Khảo sát thị trường (kiểm tra thực địa) | 500.000đ |
 
-**Quy tắc chung**
-- SĐT hội viên chuẩn hóa về 10 số, đầu `0[35789]`.
-- Mã Zalo hội viên: `#HV|<gói>|<SĐT>|<ngày>`.
-- Mã Zalo gói lẻ: `#SBG|...`.
-- Ghi chú vận hành: bản tĩnh (GitHub Pages) chưa có máy chủ nên **không tự khóa được quyền hội viên**. Kích hoạt và giới hạn lượt đang làm thủ công qua đối soát chuyển khoản.
+Gói hội viên 1/3/6 tháng và gói tra nhanh 49.000đ **đã bỏ**.
+
+**Các bước**
+1. **Dịch vụ & vị trí:** chọn 1 trong 4 thẻ. Khối định vị tự mở: dán link Google Maps (`@lat,lng`, `?q=lat,lng`), nhập `Lat, Lng`, chạm ghim trên bản đồ hoặc GPS. Chặn nếu ngoài Nghệ An – Hà Tĩnh.
+2. **Thông số:** Diện tích (m²), Tỷ lệ đất ở (%), Đường (1–4), Hình dáng (VU / KV / KEM).
+3. **Thanh toán:** tóm tắt + mã `TBSB-XXXX`; VietQR đúng số tiền, nội dung `TBSB XXXX`; ảnh bill (chụp hoặc chọn ảnh có sẵn, nén JPEG ≤ 1024 px); số Zalo 10 chữ số. Nút "Hoàn tất" chỉ bật khi số Zalo hợp lệ; thiếu bill chỉ cảnh báo nhẹ.
+4. **Hoàn tất:** lưu đơn, gửi Telegram (nếu cấu hình), hiện "Đã tiếp nhận yêu cầu!" và nút "Gửi trực tiếp sang Zalo Quản trị (0986.299.731)": copy nội dung đơn rồi mở `https://zalo.me/0986299731`.
+
+**Mã đơn trong tin nhắn** (dán vào tab Quản trị để đọc lại):
+```
+#SBG2|<mã>|<lat>|<lng>|<diện tích>|<tỷ lệ đất ở %>|<VU|KV|KEM>|<loại đường>|<dịch vụ>|<SĐT>
+```
+Mã cũ `#SBG|mã|lat|lng|mt|sau|hình|đường|...` vẫn đọc được (diện tích = mt × sâu, tỷ lệ đất ở 100%).
+
+## 9. Lưu đơn & giới hạn của bản tĩnh
+
+- Đơn lưu `localStorage['tbsb_orders']` (tối đa 30 đơn; đầy bộ nhớ thì xóa ảnh bill của đơn cũ nhất trước).
+- **localStorage chỉ nằm trên trình duyệt đã đặt đơn.** Đơn khách đặt trên điện thoại của họ không hiện ở tab Quản trị trên máy quản trị. Kênh nhận đơn từ máy khách là Telegram và Zalo.
+- Telegram: `sendPhoto` (kèm bill, caption ≤ 1024 ký tự) hoặc `sendMessage`. Thứ tự lấy cấu hình: `CONFIG.TG_PROXY_URL` → `CONFIG.TG_BOT_TOKEN/TG_CHAT_ID` → Cài đặt trên máy.
+  - Khuyến nghị dùng Cloudflare Worker (`worker/telegram-proxy.js`): token giữ trong biến môi trường, chỉ nhận `sendPhoto/sendMessage`, kiểm tra Origin.
+  - Nhúng token thẳng vào `CONFIG` thì ai xem mã nguồn cũng đọc được và có thể spam/chiếm bot.
+- Tài khoản nhận tiền (`PAY_BIN/PAY_ACC/PAY_NAME`) và link Google Sheets (`SHEET_CSV`) cũng phải điền trong `CONFIG` thì điện thoại khách mới thấy đúng.
+- Tab Quản trị mở bằng nút "Quản trị" ở chân trang hoặc `#quantri`; bản tĩnh không có mật khẩu thật.

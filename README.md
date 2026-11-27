@@ -8,37 +8,30 @@
 
 ## Tính năng
 
-### Tab "Tra cứu & Gửi yêu cầu"
+### Trang khách (Wizard 4 bước trên điện thoại)
 
-**Chọn vị trí trên bản đồ**
-- Chạm bản đồ, kéo ghim cam hoặc bấm **Vị trí hiện tại (GPS)**. Vẫn dán được link Google Maps hoặc nhập tọa độ như cũ.
-- Thẻ tọa độ nổi trên bản đồ hiện Lat, Lng theo thời gian thực, có nút Copy.
-- Lớp nền gồm **Vệ tinh + tên đường** và **Giao thông**, chuyển ở góc dưới phải. Có nền dự phòng Esri / OpenStreetMap.
+| Bước | Nội dung |
+|---|---|
+| 1. Dịch vụ & vị trí | Lời chào, chọn 1 trong 4 dịch vụ. Khối định vị tự mở: dán link Google Maps, nhập `Lat, Lng`, chạm ghim trên bản đồ hoặc GPS |
+| 2. Thông số | Diện tích (m²), Tỷ lệ đất ở (%, nút nhanh 100/80/50/30), Đường (4 loại), Hình dáng (3 mức) |
+| 3. Thanh toán | Tóm tắt + mã `TBSB-XXXX`, VietQR đúng số tiền (ND `TBSB XXXX`), chụp hoặc chọn ảnh bill, số Zalo 10 chữ số |
+| 4. Hoàn tất | "Đã tiếp nhận yêu cầu!", gửi Telegram cho quản trị (nếu cấu hình), nút **Gửi trực tiếp sang Zalo Quản trị (0986.299.731)** copy sẵn nội dung đơn |
 
-**Ghim và danh sách điểm đối chiếu**
-- Ghim màu cho toàn bộ kho dữ liệu, tô màu theo loại đường hoặc theo khung giá, kèm chú thích.
-- Danh sách 5 điểm dữ liệu đối chiếu gần nhất:
-  - 3 ghim xanh đánh số 1-2-3 được đưa vào công thức;
-  - các ghim xám là điểm tham khảo mở rộng.
-- Chạm vào một điểm để bật/tắt nó; khung giá được tính lại ngay.
+| Dịch vụ | Giá |
+|---|---|
+| Định giá sơ bộ | 150.000đ |
+| Check quy hoạch | 150.000đ |
+| Combo Định giá + Check quy hoạch (Phổ biến nhất) | 300.000đ |
+| Khảo sát thị trường (kiểm tra thực địa) | 500.000đ |
 
-**Gói dịch vụ**
-- Nhóm A, hội viên tra tự động không giới hạn:
-  - 1 tháng: 299.000đ
-  - 3 tháng: 790.000đ
-  - 6 tháng: 1.390.000đ
-- Mã QR được tạo theo SĐT, nội dung chuyển khoản `TBSB 1T/3T/6T <SĐT>`.
-- Nhóm B, gói lẻ:
-  - Tra nhanh: 49.000đ
-  - Thông báo sơ bộ + quy hoạch từ xa: 300.000đ
-  - Khảo sát thực địa: 500.000đ
-- Gói lẻ có mã `TBSB-XXXX`, VietQR động và nút Copy gửi Zalo.
+Bản đồ của khách có ghim màu theo loại đường nhưng **không hiện đơn giá**, để không lộ kho giá.
 
-### Tab "Quản trị hệ thống"
-- Đọc yêu cầu từ tin nhắn Zalo (dòng `#SBG|...`).
-- Xem từng bước lọc dữ liệu: loại đường, bán kính, lọc nhiễu, kiểm soát chênh lệch.
-- Công cụ bổ trợ: chiết trừ – hao mòn, vốn hóa thu nhập, thặng dư. Kết quả được đối chiếu lên thông báo.
-- Xuất **THÔNG BÁO SƠ BỘ GIÁ (PNG)** và **Sơ đồ vị trí (PNG)**.
+### Tab Quản trị (nút "Quản trị" ở chân trang, hoặc thêm `#quantri` vào link)
+- Danh sách đơn đặt trên chính trình duyệt này (ảnh bill, SĐT, dịch vụ, trạng thái Telegram), bấm **Mở xử lý** để nạp ca.
+- Dán tin nhắn Zalo / Telegram có dòng `#SBG2|...` để đọc ca từ máy khách.
+- Bản đồ Leaflet: ghim màu theo loại đường hoặc khung giá, ghim xanh 1-2-3 nối nét đứt, ghim xám tham khảo; chạm thẻ để bật/tắt điểm.
+- Công cụ bổ trợ: chiết trừ – hao mòn, vốn hóa thu nhập, thặng dư.
+- Xuất **THÔNG BÁO SƠ BỘ GIÁ (PNG)** và **Sơ đồ vị trí (`Sodovitri.png`)**.
 
 ## Thuật toán (tóm tắt)
 
@@ -49,11 +42,8 @@
 3. Chuẩn hóa chiều sâu: phần ≤ 25 m tính 100%, phần vượt tính 55–60%.
 4. Lọc nhiễu: loại điểm lệch quá ±25% so với trung vị (khi có từ 4 điểm).
 5. Lấy 5 điểm gần nhất. Mặc định đưa 3 điểm vào công thức, với trọng số `W = 1/(d² + 100)`.
-6. Nhân hệ số hình dáng:
-   - Vuông vắn: 1,00
-   - Nở hậu: 1,03–1,05
-   - Thóp hậu: 0,92–0,95
-   - Chữ L / đâm đường: 0,85–0,90
+6. Nhân hệ số hình dáng (cố định): Vuông 1,00 · Không vuông 0,98 · Kém 0,90.
+   - Giá trị đất = Đơn giá × (Diện tích đất ở + Diện tích vườn × 35%).
 7. Kiểm soát chênh lệch giữa mức giá đại diện và từng mức giá chỉ dẫn:
    - ≤ 10%: đạt
    - 10–15%: cảnh báo
@@ -74,6 +64,26 @@ Sheet có 7 cột:
 - Chia sẻ Sheet ở chế độ "Bất kỳ ai có link", sau đó dán link vào **Cài đặt → Đồng bộ Google Sheets**.
 - Lưu ý: link CSV công khai cho phép bất kỳ ai tải toàn bộ kho giá.
 
+## Cấu hình cho điện thoại khách (`CONFIG` đầu mã nguồn)
+
+Cài đặt trong tab Quản trị và danh sách đơn chỉ lưu trong trình duyệt của máy đang mở (localStorage). Điện thoại khách không đọc được. Vì vậy các giá trị dưới đây phải điền thẳng vào khối `CONFIG` trong `index.html` rồi đẩy lên GitHub:
+
+| Khóa | Dùng để | Ghi chú |
+|---|---|---|
+| `PAY_BIN`, `PAY_ACC`, `PAY_NAME` | VietQR trên máy khách | Bắt buộc. Để trống thì khách thấy tài khoản mẫu `0000000000` |
+| `SHEET_CSV` | Ghim dữ liệu thật trên bản đồ khách | Link CSV công khai: ai có link tải được toàn bộ kho giá |
+| `TG_PROXY_URL` | Báo đơn kèm ảnh bill về Telegram | **Khuyến nghị.** URL Cloudflare Worker, token nằm trên máy chủ |
+| `TG_BOT_TOKEN`, `TG_CHAT_ID` | Như trên, gọi thẳng Telegram | **Không khuyến nghị**: ai xem mã nguồn cũng đọc được token |
+| `ADMIN_ZALO` | Nút Zalo quản trị | Mặc định `0986299731` |
+
+### Dựng Cloudflare Worker cho Telegram (miễn phí)
+1. Tạo bot với @BotFather, nhắn `/start` cho bot, lấy chat ID.
+2. Cloudflare → Workers & Pages → Create Worker → dán `worker/telegram-proxy.js` → Deploy.
+3. Thêm biến: `TG_BOT_TOKEN` (Secret), `TG_CHAT_ID`, `ALLOWED_ORIGIN` = `https://nguyennang384.github.io`.
+4. Điền URL Worker vào `CONFIG.TG_PROXY_URL`, commit, push.
+
+Chưa dựng Worker thì đơn từ máy khách chỉ đến được qua nút Zalo (khách tự dán nội dung và gửi ảnh bill).
+
 ## Triển khai GitHub Pages
 
 1. Vào **Settings → Pages**.
@@ -88,7 +98,8 @@ GPS cần HTTPS; GitHub Pages đã có sẵn.
 |---|---|---|
 | Tile Google (`mt1.google.com/vt`) gọi trực tiếp, không qua Google Maps Platform | Không đúng điều khoản sử dụng của Google, có thể bị chặn hoặc đổi bất kỳ lúc nào | Tự chuyển nền dự phòng Esri / OSM khi tile lỗi; có nút "Dự phòng" |
 | Ảnh `Sodovitri.png` cần tile có CORS | Nếu nguồn không cho phép, canvas không chụp được nền | Thử lần lượt Google → Esri / OSM. Nếu tất cả lỗi thì dùng lưới tọa độ và báo rõ trên giao diện |
-| Bản tĩnh không có máy chủ | Không tự khóa được quyền hội viên hay số lượt tra; toàn bộ dữ liệu và thuật toán nằm trong trình duyệt | Kích hoạt hội viên thủ công qua đối soát chuyển khoản. Cần máy chủ (VD: Cloudflare Worker) nếu muốn thu phí thật |
+| Bản tĩnh không có máy chủ | Đơn và cài đặt lưu theo từng trình duyệt; tab Quản trị không có mật khẩu thật; toàn bộ dữ liệu và thuật toán nằm trong trình duyệt | Nhận đơn qua Telegram (Worker) và Zalo; đối soát chuyển khoản thủ công theo ND `TBSB XXXX` |
+| Ảnh bill do khách tải lên | Có thể là ảnh giả hoặc ảnh cũ | Luôn đối chiếu sao kê theo mã đơn trước khi xử lý |
 | Trọng số `1/(d² + 100)` | Điểm gần nhất có thể chiếm hơn 90% trọng số | Cân nhắc `1/(d + 100)²` hoặc giới hạn trọng số mỗi điểm |
 | Hệ số địa phương | Chưa đối chiếu văn bản gốc | Khóa trong khung cho phép, chỉnh ở **Cài đặt** |
 
