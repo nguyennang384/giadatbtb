@@ -238,6 +238,20 @@
         <label class="opt"><input type="radio" name="shape" value="KV"><span><b><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true"><path d="M1.5 3 12.5 1.5v11L1.5 11z" fill="currentColor"/></svg></b>Không vuông<em data-k="KV"></em></span></label>
         <label class="opt"><input type="radio" name="shape" value="KEM"><span><b><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true"><path d="M1.5 1.5h6v5h5v6h-11z" fill="currentColor"/></svg></b>Kém (méo, chữ L, đâm đường)<em data-k="KEM"></em></span></label>
       </fieldset>
+      <div class="rounded-2xl border border-line bg-surface p-4 flex flex-col gap-3">
+        <h3 class="font-bold">Đính kèm Giấy chứng nhận (Không bắt buộc)</h3>
+        <p class="italic text-sm text-muted -mt-1">Nếu có sẵn, anh/chị chụp hoặc tải lên trang thông tin thửa đất &amp; trang sơ đồ để kiểm tra quy hoạch, kích thước chuẩn xác hơn.</p>
+        <label for="gcnInput" id="gcnPick" class="btn text-sm border-2 border-dashed cursor-pointer" style="border-color: var(--line)">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M4 8h3l2-3h6l2 3h3v11H4z"/><circle cx="12" cy="13" r="3.5"/></svg>Chụp hoặc chọn ảnh (tối đa 3)</label>
+        <input id="gcnInput" type="file" accept="image/*" multiple class="sr-only">
+        <ul id="gcnList" class="grid grid-cols-3 gap-2" aria-label="Ảnh Giấy chứng nhận đã chọn"></ul>
+        <p id="gcnMsg" class="text-xs" aria-live="polite"></p>
+        <label id="gcnConsentWrap" class="flex gap-2.5 items-start text-sm cursor-pointer" hidden>
+          <input type="checkbox" id="gcnConsent" class="mt-0.5 w-5 h-5 shrink-0" style="accent-color: var(--navy)">
+          <span>Tôi đồng ý gửi ảnh Giấy chứng nhận cho quản trị để đối chiếu thông số của yêu cầu này.</span>
+        </label>
+        <p class="text-xs text-muted">Ảnh được nén trên máy trước khi gửi, chỉ dùng để đối chiếu thông số kỹ thuật cho yêu cầu này và không chia sẻ cho bên thứ ba.</p>
+      </div>
       <p id="s2Msg" class="text-sm font-semibold" style="color: var(--bad)" aria-live="polite"></p>
       <button type="button" id="doneStep2" class="btn w-full text-lg !py-4" style="background: var(--gold); color: #14213d">Xong</button>
     </section>
@@ -962,7 +976,8 @@
   const normPhone = v => { let d = String(v || '').replace(/\D/g, ''); if (d.startsWith('84') && d.length === 11) d = '0' + d.slice(2); return d; };
   const fmtPhone = p => p.length === 10 ? `${p.slice(0, 4)}.${p.slice(4, 7)}.${p.slice(7)}` : p;
   function makeOrderCode() { return 'TBSB-' + String(Math.floor(1000 + Math.random() * 9000)); }
-  const W = { step: 1, svc: '', lat: NaN, lng: NaN, dt: NaN, ratio: 100, road: 0, shape: '', code: '', phone: '', bill: null };
+  const W = { step: 1, svc: '', lat: NaN, lng: NaN, dt: NaN, ratio: 100, road: 0, shape: '', code: '', phone: '', bill: null, gcn: [] };
+  const GCN_MAX = 3;
 
   function goStep(n) {
     W.step = n;
@@ -1045,6 +1060,7 @@
     if (!(r >= 0 && r <= 100)) { m.textContent = 'Tỷ lệ đất ở phải từ 0 đến 100%.'; $('w_ratio').focus(); return; }
     if (!road) { m.textContent = 'Chọn loại đường vào thửa đất.'; return; }
     if (!SHAPE[shape]) { m.textContent = 'Chọn hình dáng thửa đất.'; return; }
+    if (W.gcn.length && !$('gcnConsent').checked) { m.textContent = 'Đánh dấu đồng ý gửi ảnh Giấy chứng nhận, hoặc bỏ ảnh đi nếu không muốn gửi.'; $('gcnConsentWrap').scrollIntoView({ behavior: 'smooth', block: 'center' }); return; }
     m.textContent = '';
     Object.assign(W, { dt, ratio: r, road, shape });
     if (!W.code) W.code = makeOrderCode();
@@ -1065,25 +1081,54 @@
       row('Diện tích', `<span class="num">${fmt(W.dt, 1)} m²</span>`),
       row('Tỷ lệ đất ở', `<span class="num">${fmt(W.ratio, 0)}% · ở ${fmt(so, 1)} m², vườn ${fmt(W.dt - so, 1)} m²</span>`),
       row('Đường', `Loại ${W.road} · ${esc(ROAD_NAME[W.road])}`),
-      row('Hình dáng', `${esc(SHAPE[W.shape].name)} <span class="num text-muted">×${fmt(SHAPE[W.shape].k, 2)}</span>`)
+      row('Hình dáng', `${esc(SHAPE[W.shape].name)} <span class="num text-muted">×${fmt(SHAPE[W.shape].k, 2)}</span>`),
+      row('Giấy chứng nhận', W.gcn.length ? `<span style="color: var(--good)">Đã đính kèm ${W.gcn.length} ảnh</span>` : '<span class="text-muted">Chưa đính kèm</span>')
     ].join('');
     $('payInfo').textContent = payNote();
     renderQR($('qrSlot'), s.amt, payNote());
     updateFinish();
   }
-  function compressImage(file, max = 1024, q = 0.78) {
+  // Nén ảnh trên máy: thu chiều rộng về tối đa 1200px, JPEG chất lượng 0,75 (ảnh GCN và ảnh bill)
+  function compressImage(file, maxW = 1200, q = 0.75) {
     return new Promise((res, rej) => {
-      const url = URL.createObjectURL(file), im = new Image();
+      const src = URL.createObjectURL(file), im = new Image();
       im.onload = () => {
-        const k = Math.min(1, max / Math.max(im.naturalWidth, im.naturalHeight));
+        const k = Math.min(1, maxW / im.naturalWidth, 4000 / im.naturalHeight);
         const cv = document.createElement('canvas'); cv.width = Math.round(im.naturalWidth * k); cv.height = Math.round(im.naturalHeight * k);
         const cx = cv.getContext('2d'); cx.fillStyle = '#fff'; cx.fillRect(0, 0, cv.width, cv.height); cx.drawImage(im, 0, 0, cv.width, cv.height);
-        URL.revokeObjectURL(url);
-        cv.toBlob(b => b ? res({ blob: b, dataUrl: cv.toDataURL('image/jpeg', q), w: cv.width, h: cv.height }) : rej(new Error('Không nén được ảnh')), 'image/jpeg', q);
+        URL.revokeObjectURL(src);
+        cv.toBlob(b => b ? res({ blob: b, url: URL.createObjectURL(b), w: cv.width, h: cv.height, name: file.name || 'anh.jpg' }) : rej(new Error('Không nén được ảnh')), 'image/jpeg', q);
       };
-      im.onerror = () => { URL.revokeObjectURL(url); rej(new Error('Không đọc được ảnh')); };
-      im.src = url;
+      im.onerror = () => { URL.revokeObjectURL(src); rej(new Error('Không đọc được ảnh')); };
+      im.src = src;
     });
+  }
+  const dropImg = x => { if (x && x.url) URL.revokeObjectURL(x.url); };
+  async function onGcn(e) {
+    const files = [...(e.target.files || [])];
+    e.target.value = '';
+    if (!files.length) return;
+    const m = $('gcnMsg'), room = GCN_MAX - W.gcn.length;
+    if (room <= 0) { m.style.color = 'var(--warn)'; m.textContent = `Đã đủ ${GCN_MAX} ảnh. Xóa bớt ảnh để chọn ảnh khác.`; return; }
+    const take = files.slice(0, room);
+    m.style.color = 'var(--muted)'; m.textContent = 'Đang nén ảnh…';
+    let fail = 0;
+    for (const f of take) { try { W.gcn.push(await compressImage(f)); } catch (er) { fail++; } }
+    renderGcn();
+    const notes = [];
+    if (files.length > room) notes.push(`Chỉ nhận tối đa ${GCN_MAX} ảnh, đã bỏ ${files.length - room} ảnh thừa.`);
+    if (fail) notes.push(`${fail} ảnh không đọc được.`);
+    m.style.color = notes.length ? 'var(--warn)' : 'var(--good)';
+    m.textContent = notes.length ? notes.join(' ') : `Đã nén ${W.gcn.length} ảnh · tổng ${Math.round(W.gcn.reduce((a, x) => a + x.blob.size, 0) / 1024)} KB.`;
+  }
+  function renderGcn() {
+    $('gcnList').innerHTML = W.gcn.map((g, i) => `<li class="relative"><img src="${g.url}" alt="Ảnh Giấy chứng nhận ${i + 1}" class="w-full aspect-[3/4] object-cover rounded-lg border border-line">
+      <button type="button" data-gdel="${i}" class="absolute -top-2 -right-2 w-7 h-7 rounded-full grid place-items-center text-base font-bold text-white shadow" style="background: var(--bad)" aria-label="Xóa ảnh ${i + 1}">×</button>
+      <span class="absolute bottom-1 left-1 text-[10px] font-bold px-1.5 rounded" style="background: rgba(20,33,61,.8); color: #fff">${Math.round(g.blob.size / 1024)} KB</span></li>`).join('');
+    $('gcnList').querySelectorAll('[data-gdel]').forEach(b => b.onclick = () => { dropImg(W.gcn.splice(+b.dataset.gdel, 1)[0]); renderGcn(); $('gcnMsg').textContent = ''; });
+    $('gcnConsentWrap').hidden = !W.gcn.length;
+    if (!W.gcn.length) $('gcnConsent').checked = false;
+    $('gcnPick').hidden = W.gcn.length >= GCN_MAX;
   }
   async function onBill(e) {
     const f = e.target.files && e.target.files[0];
@@ -1092,11 +1137,11 @@
     $('billName').textContent = 'Đang xử lý ảnh…'; $('billPrevBox').hidden = false;
     try {
       const r = await compressImage(f);
-      W.bill = r;
-      $('billPrev').src = r.dataUrl;
+      dropImg(W.bill); W.bill = r;
+      $('billPrev').src = r.url;
       $('billName').textContent = `${f.name || 'bill.jpg'} · ${Math.round(r.blob.size / 1024)} KB`;
     } catch (er) {
-      W.bill = null; $('billPrevBox').hidden = true;
+      dropImg(W.bill); W.bill = null; $('billPrevBox').hidden = true;
       $('phoneMsg').style.color = 'var(--bad)'; $('phoneMsg').textContent = er.message + '. Thử chụp lại hoặc chọn ảnh khác.';
     }
     updateFinish();
@@ -1114,7 +1159,22 @@
   /* Lưu đơn + gửi quản trị */
   const ORD_KEY = 'tbsb_orders', ORD_MAX = 30;
   const loadOrders = () => { const l = store.get(ORD_KEY, []); return Array.isArray(l) ? l : []; };
+  const idb = (() => {
+    let p = null;
+    const open = () => p || (p = new Promise((res, rej) => {
+      if (!window.indexedDB) { rej(new Error('Trình duyệt không hỗ trợ IndexedDB')); return; }
+      const r = indexedDB.open('tbsb', 1);
+      r.onupgradeneeded = () => r.result.createObjectStore('imgs');
+      r.onsuccess = () => res(r.result); r.onerror = () => rej(r.error);
+    }));
+    const tx = (mode, fn) => open().then(db => new Promise((res, rej) => {
+      const t = db.transaction('imgs', mode), q = fn(t.objectStore('imgs'));
+      t.oncomplete = () => res(q && q.result); t.onerror = () => rej(t.error); t.onabort = () => rej(t.error);
+    }));
+    return { put: (k, v) => tx('readwrite', s => s.put(v, k)), get: k => tx('readonly', s => s.get(k)), del: k => tx('readwrite', s => s.delete(k)) };
+  })();
   function saveOrders(list) {
+    list.slice(ORD_MAX).forEach(o => { if (o.imgKey) idb.del(o.imgKey).catch(() => {}); });
     list = list.slice(0, ORD_MAX);
     for (let i = list.length; i >= 0; i--) {
       try { localStorage.setItem(ORD_KEY, JSON.stringify(list)); return true; }
@@ -1122,7 +1182,17 @@
     }
     return false;
   }
-  function orderLine(o) { return `#SBG2|${o.code}|${o.lat.toFixed(6)}|${o.lng.toFixed(6)}|${o.dt}|${o.ratio}|${o.shape}|${o.road}|${o.svc}|${o.phone}`; }
+  // Lưu ảnh của đơn; đầy bộ nhớ thì xóa ảnh của các đơn cũ (giữ 10 đơn mới nhất) rồi thử lại 1 lần
+  async function saveOrderImages(o, imgs) {
+    try { await idb.put(o.imgKey, imgs); return true; }
+    catch (e) {
+      const l = loadOrders();
+      for (const x of l.slice(10)) if (x.imgKey && x.imgKey !== o.imgKey) { await idb.del(x.imgKey).catch(() => {}); x.imgDropped = true; }
+      saveOrders(l);
+      try { await idb.put(o.imgKey, imgs); return true; } catch (e2) { return false; }
+    }
+  }
+  function orderLine(o) { return `#SBG2|${o.code}|${o.lat.toFixed(6)}|${o.lng.toFixed(6)}|${o.dt}|${o.ratio}|${o.shape}|${o.road}|${o.svc}|${o.phone}|${o.gcnCount || 0}`; }
   function orderText(o) {
     const so = o.dt * o.ratio / 100;
     return [
@@ -1135,19 +1205,29 @@
       `Hình dáng: ${SHAPE[o.shape].name} (×${fmt(SHAPE[o.shape].k, 2)})`,
       `Zalo nhận kết quả: ${o.phone}`,
       `Chuyển khoản: ND "${o.code.replace('-', ' ')}" · bill ${o.hasBill ? 'đã đính kèm' : 'chưa đính kèm'}`,
+      `Giấy chứng nhận: ${o.gcnCount ? `đã đính kèm ${o.gcnCount} ảnh` : 'chưa đính kèm'}`,
       o.hasBill ? '(Gửi kèm ảnh bill trong khung chat này nếu quản trị chưa nhận được.)' : '(Vui lòng gửi ảnh bill trong khung chat này.)',
+      o.gcnCount ? '(Nếu quản trị chưa nhận được ảnh, gửi lại ảnh Giấy chứng nhận trong khung chat này.)' : '(Nếu có Giấy chứng nhận, gửi kèm ảnh trang thông tin thửa đất và trang sơ đồ để đối chiếu kích thước, quy hoạch.)',
       orderLine(o)
     ].join('\n');
   }
   const tgConf = () => ({ proxy: (CONFIG.TG_PROXY_URL || '').trim(), token: (CONFIG.TG_BOT_TOKEN || settings.tgToken || '').trim(), chat: (CONFIG.TG_CHAT_ID || settings.tgChat || '').trim() });
-  async function sendTelegram(text, blob, fname) {
+  // photos: [{ blob, name }]. 0 ảnh → sendMessage, 1 ảnh → sendPhoto, 2–10 ảnh → sendMediaGroup (chú thích ở ảnh đầu)
+  async function sendTelegram(text, photos) {
     const t = tgConf();
     if (!t.proxy && !(t.token && t.chat)) return { skipped: true };
-    const method = blob ? 'sendPhoto' : 'sendMessage';
+    photos = (photos || []).slice(0, 10);
     const fd = new FormData();
     if (t.chat) fd.append('chat_id', t.chat);
-    if (blob) { fd.append('photo', blob, fname || 'bill.jpg'); fd.append('caption', text.slice(0, 1024)); }
-    else fd.append('text', text.slice(0, 4000));
+    let method;
+    if (!photos.length) { method = 'sendMessage'; fd.append('text', text.slice(0, 4000)); }
+    else if (photos.length === 1) { method = 'sendPhoto'; fd.append('photo', photos[0].blob, photos[0].name); fd.append('caption', text.slice(0, 1024)); }
+    else {
+      method = 'sendMediaGroup';
+      fd.append('media', JSON.stringify(photos.map((p, i) => Object.assign({ type: 'photo', media: 'attach://photo' + i }, i === 0 ? { caption: text.slice(0, 1024) } : {}))));
+      fd.append('caption', text.slice(0, 1024));
+      photos.forEach((p, i) => fd.append('photo' + i, p.blob, p.name));
+    }
     const url = t.proxy ? t.proxy.replace(/\/+$/, '') + '/' + method : `https://api.telegram.org/bot${t.token}/${method}`;
     try {
       const res = await fetch(url, { method: 'POST', body: fd });
@@ -1160,7 +1240,8 @@
     if ($('finishBtn').disabled) return;
     $('finishBtn').disabled = true;
     const o = { code: W.code, svc: W.svc, lat: W.lat, lng: W.lng, dt: W.dt, ratio: W.ratio, road: W.road, shape: W.shape, phone: W.phone,
-      hasBill: !!W.bill, bill: W.bill ? W.bill.dataUrl : null, ts: Date.now(), tg: 'pending' };
+      hasBill: !!W.bill, gcnCount: W.gcn.length, ts: Date.now(), tg: 'pending' };
+    if (W.bill || W.gcn.length) o.imgKey = o.code + '-' + o.ts;
     const text = orderText(o);
     lastOrder = o;
     const list = loadOrders(); list.unshift(o); saveOrders(list);
@@ -1170,11 +1251,17 @@
     const st = $('sendStatus');
     st.style.color = 'var(--muted)'; st.textContent = 'Đang chuyển yêu cầu tới quản trị…';
     goStep(4);
-    const bill = W.bill;
-    W.code = ''; W.bill = null; $('billPrevBox').hidden = true;
-    const r = await sendTelegram(text, bill && bill.blob, o.code + '-bill.jpg');
+    const bill = W.bill, gcn = W.gcn.slice();
+    W.code = ''; W.bill = null; W.gcn = []; $('billPrevBox').hidden = true; $('billPrev').removeAttribute('src'); renderGcn();
+    const photos = [...(bill ? [{ blob: bill.blob, name: o.code + '-bill.jpg' }] : []), ...gcn.map((g, k) => ({ blob: g.blob, name: `${o.code}-gcn${k + 1}.jpg` }))];
+    const [saved, r] = await Promise.all([
+      o.imgKey ? saveOrderImages(o, { bill: bill ? bill.blob : null, gcn: gcn.map(g => g.blob) }) : Promise.resolve(true),
+      sendTelegram(text, photos)
+    ]);
+    dropImg(bill); gcn.forEach(dropImg);
     o.tg = r.skipped ? 'off' : r.ok ? 'ok' : 'fail';
-    const l2 = loadOrders(); const i = l2.findIndex(x => x.code === o.code && x.ts === o.ts); if (i >= 0) { l2[i].tg = o.tg; saveOrders(l2); }
+    const l2 = loadOrders(); const i = l2.findIndex(x => x.code === o.code && x.ts === o.ts);
+    if (i >= 0) { l2[i].tg = o.tg; if (!saved) { l2[i].imgDropped = true; } saveOrders(l2); }
     if (r.ok) { st.style.color = 'var(--good)'; st.textContent = 'Đã chuyển yêu cầu tới quản trị. Có thể bấm nút dưới để nhắn thêm qua Zalo.'; }
     else { st.style.color = 'var(--warn)'; st.textContent = 'Bấm nút bên dưới để gửi yêu cầu qua Zalo cho quản trị (thông tin đơn được copy sẵn, chỉ cần dán và gửi kèm ảnh bill).'; }
   }
@@ -1193,7 +1280,7 @@
     m.textContent = ok ? 'Đã copy thông tin đơn. Trong Zalo, nhấn giữ ô chat → Dán, rồi gửi kèm ảnh bill.' : 'Không copy tự động được. Mở mục "Xem nội dung đơn" bên dưới, nhấn giữ để sao chép.';
   }
   function resetWizard() {
-    W.svc = ''; W.code = ''; W.bill = null;
+    W.svc = ''; W.code = ''; dropImg(W.bill); W.bill = null; W.gcn.forEach(dropImg); W.gcn = []; renderGcn(); $('gcnMsg').textContent = '';
     document.querySelectorAll('input[name="svc"]').forEach(r => { r.checked = false; });
     $('locBlock').hidden = true; $('billWarn').hidden = true;
     saveDraft(); goStep(1);
@@ -1461,7 +1548,7 @@
     if (m2) {
       const p = m2[1].trim().split('|');
       if (p.length < 7) return null;
-      return { code: p[0], lat: num(p[1]), lng: num(p[2]), dt: num(p[3]), ratio: num(p[4]), shape: SHAPE[p[5]] ? p[5] : 'VU', road: parseInt(p[6], 10), svc: p[7] || '', phone: p[8] || '', zone: 'auto' };
+      return { code: p[0], lat: num(p[1]), lng: num(p[2]), dt: num(p[3]), ratio: num(p[4]), shape: SHAPE[p[5]] ? p[5] : 'VU', road: parseInt(p[6], 10), svc: p[7] || '', phone: p[8] || '', gcnCount: parseInt(p[9], 10) || 0, zone: 'auto' };
     }
     const m = s.match(/#SBG\|([^\n]+)/);                         // mã cũ: code|lat|lng|mt|sau|shape|road|...
     if (!m) return null;
@@ -1580,39 +1667,64 @@
     renderTicket();
   }
 
-  /* Danh sách đơn lưu trên thiết bị này */
+  /* Danh sách đơn lưu trên thiết bị này (thông tin: localStorage · ảnh bill + GCN: IndexedDB) */
+  let orderUrls = [];
+  function showImg(blob, url, title, name) {
+    $('imgTitle').textContent = title;
+    $('imgOut').src = url; $('imgModal').hidden = false;
+    lastPng = { url, blob, name, msg: $('caseMsg') };
+  }
   function renderOrders() {
+    orderUrls.forEach(u => URL.revokeObjectURL(u)); orderUrls = [];
     const list = loadOrders(), ul = $('orderList');
     if (!list.length) { ul.innerHTML = '<li class="text-sm text-muted">Chưa có đơn nào trên thiết bị này.</li>'; return; }
     const tgTxt = { ok: ['Đã báo Telegram', 'var(--good)'], fail: ['Telegram lỗi', 'var(--bad)'], off: ['Chưa cấu hình Telegram', 'var(--muted)'], pending: ['Đang gửi', 'var(--muted)'] };
     ul.innerHTML = list.map((o, i) => {
       const t = tgTxt[o.tg] || tgTxt.off, d = new Date(o.ts);
       const when = d.toLocaleDateString('vi-VN') + ' ' + d.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' });
-      return `<li class="rounded-xl border border-line p-3 flex gap-3 items-start">
-        ${o.bill ? `<button type="button" data-bill="${i}" class="shrink-0" aria-label="Xem ảnh bill ${esc(o.code)}"><img src="${o.bill}" alt="" class="w-14 h-14 object-cover rounded-lg border border-line"></button>`
-          : `<span class="shrink-0 w-14 h-14 rounded-lg border border-dashed border-line grid place-items-center text-[10px] text-muted text-center leading-tight">${o.billDropped ? 'Bill đã xóa<br>do đầy bộ nhớ' : 'Chưa có<br>bill'}</span>`}
-        <div class="min-w-0 flex-1">
-          <div class="flex justify-between gap-2"><span class="font-mono font-bold text-sm">${esc(o.code)}</span><span class="text-[11px] text-muted whitespace-nowrap">${when}</span></div>
-          <div class="text-xs mt-0.5">${esc((SVC[o.svc] || {}).name || o.svc)} · <b class="num">${esc(o.phone)}</b></div>
-          <div class="text-[11px] text-muted mt-0.5 num">${fmt(o.dt, 0)} m² · ở ${fmt(o.ratio, 0)}% · đường ${o.road} · ${esc((SHAPE[o.shape] || {}).name || o.shape)}</div>
-          <div class="flex justify-between items-center gap-2 mt-1.5">
+      return `<li class="rounded-xl border border-line p-3 flex flex-col gap-2">
+          <div class="flex justify-between gap-2 items-start">
+            <span class="flex items-center gap-1.5 flex-wrap"><span class="font-mono font-bold text-sm">${esc(o.code)}</span>${o.gcnCount ? `<span class="text-[10.5px] font-bold rounded-full px-2 py-0.5" style="background:#e3f4ec;color:#12805c">Có ảnh GCN · ${o.gcnCount}</span>` : ''}</span>
+            <span class="text-[11px] text-muted whitespace-nowrap">${when}</span></div>
+          <div class="text-xs">${esc((SVC[o.svc] || {}).name || o.svc)} · <b class="num">${esc(o.phone)}</b></div>
+          <div class="text-[11px] text-muted num">${fmt(o.dt, 0)} m² · ở ${fmt(o.ratio, 0)}% · đường ${o.road} · ${esc((SHAPE[o.shape] || {}).name || o.shape)}</div>
+          <div data-imgs="${i}" class="flex gap-2 flex-wrap"></div>
+          <div class="flex justify-between items-center gap-2">
             <span class="text-[11px] font-semibold" style="color:${t[1]}">${t[0]}</span>
             <span class="flex gap-3 text-xs font-semibold"><button type="button" data-open="${i}" style="color: var(--teal)" class="underline">Mở xử lý</button><button type="button" data-del="${i}" style="color: var(--bad)" class="underline">Xóa</button></span>
-          </div>
-        </div></li>`;
+          </div></li>`;
     }).join('');
+    const thumb = (url, label, attr) => `<button type="button" ${attr} class="flex flex-col items-center gap-0.5" aria-label="Phóng to ${label}"><img src="${url}" alt="" class="w-16 h-16 object-cover rounded-lg border border-line"><span class="text-[10px] font-semibold text-muted">${label}</span></button>`;
+    const empty = txt => `<span class="w-16 h-16 rounded-lg border border-dashed border-line grid place-items-center text-[10px] text-muted text-center leading-tight">${txt}</span>`;
+    list.forEach((o, i) => {
+      const box = ul.querySelector(`[data-imgs="${i}"]`);
+      if (o.bill) {                                              // đơn bản cũ: bill base64 trong localStorage
+        box.innerHTML = thumb(o.bill, 'Bill', 'data-k="old"');
+        box.querySelector('button').onclick = () => showImg(dataUrlBlob(o.bill), o.bill, 'Ảnh bill ' + o.code, o.code + '-bill.jpg');
+        return;
+      }
+      if (!o.imgKey) { box.innerHTML = empty(o.billDropped ? 'Bill đã xóa' : 'Chưa có<br>bill'); return; }
+      if (o.imgDropped) { box.innerHTML = empty('Ảnh đã xóa<br>do đầy bộ nhớ'); return; }
+      idb.get(o.imgKey).then(rec => {
+        if (!rec) { box.innerHTML = empty('Không còn<br>ảnh'); return; }
+        const items = [...(rec.bill ? [[rec.bill, 'Bill', o.code + '-bill.jpg', 'Ảnh bill ' + o.code]] : []),
+          ...(rec.gcn || []).map((b, k) => [b, 'GCN ' + (k + 1), `${o.code}-gcn${k + 1}.jpg`, `Giấy chứng nhận ${k + 1}/${rec.gcn.length} · ${o.code}`])];
+        const urls = items.map(it => { const u = URL.createObjectURL(it[0]); orderUrls.push(u); return u; });
+        box.innerHTML = (rec.bill ? '' : empty('Chưa có<br>bill')) + items.map((it, k) => thumb(urls[k], it[1], `data-k="${k}"`)).join('');
+        box.querySelectorAll('button[data-k]').forEach(b => { const k = +b.dataset.k; b.onclick = () => showImg(items[k][0], urls[k], items[k][3], items[k][2]); });
+      }).catch(() => { box.innerHTML = empty('Không đọc<br>được ảnh'); });
+    });
     ul.querySelectorAll('[data-open]').forEach(b => b.onclick = () => {
       const o = loadOrders()[+b.dataset.open]; if (!o) return;
       fillCase(o);
-      $('caseMsg').style.color = 'var(--good)'; $('caseMsg').textContent = `Đang xử lý ${o.code} · ${(SVC[o.svc] || {}).name || ''} · Zalo ${o.phone}.`;
+      $('caseMsg').style.color = 'var(--good)';
+      $('caseMsg').textContent = `Đang xử lý ${o.code} · ${(SVC[o.svc] || {}).name || ''} · Zalo ${o.phone}${o.gcnCount ? ` · có ${o.gcnCount} ảnh GCN: đối chiếu diện tích, tỷ lệ đất ở, tọa độ trước khi xuất` : ''}.`;
       $('caseMsg').scrollIntoView({ behavior: 'smooth', block: 'center' });
     });
-    ul.querySelectorAll('[data-del]').forEach(b => b.onclick = () => { const l = loadOrders(); l.splice(+b.dataset.del, 1); saveOrders(l); renderOrders(); });
-    ul.querySelectorAll('[data-bill]').forEach(b => b.onclick = () => {
-      const o = loadOrders()[+b.dataset.bill]; if (!o || !o.bill) return;
-      $('imgTitle').textContent = 'Ảnh bill ' + o.code;
-      $('imgOut').src = o.bill; $('imgModal').hidden = false;
-      lastPng = { url: o.bill, blob: dataUrlBlob(o.bill), name: o.code + '-bill.jpg', msg: $('caseMsg') };
+    ul.querySelectorAll('[data-del]').forEach(b => b.onclick = () => {
+      const l = loadOrders(), [o] = l.splice(+b.dataset.del, 1);
+      if (o && o.imgKey) idb.del(o.imgKey).catch(() => {});
+      saveOrders(l); renderOrders();
     });
   }
   function dataUrlBlob(u) {
@@ -1900,7 +2012,9 @@
     $('doneStep2').addEventListener('click', doneStep2);
     $('billCam').addEventListener('change', onBill);
     $('billFile').addEventListener('change', onBill);
-    $('billClear').addEventListener('click', () => { W.bill = null; $('billPrevBox').hidden = true; updateFinish(); });
+    $('gcnInput').addEventListener('change', onGcn);
+    $('gcnConsent').addEventListener('change', () => { $('s2Msg').textContent = ''; });
+    $('billClear').addEventListener('click', () => { dropImg(W.bill); W.bill = null; $('billPrevBox').hidden = true; $('billPrev').removeAttribute('src'); updateFinish(); });
     $('w_phone').addEventListener('input', updateFinish);
     $('finishBtn').addEventListener('click', finish);
     $('zaloAdminBtn').addEventListener('click', onZaloAdmin);
@@ -1919,7 +2033,7 @@
     $('parseCase').addEventListener('click', () => {
       const c = caseFromLine($('caseText').value);
       const m = $('caseMsg');
-      if (c) { fillCase(c); m.style.color = 'var(--good)'; m.textContent = `Đã đọc yêu cầu ${c.code}${c.phone ? ' · Zalo ' + c.phone : ''}${SVC[c.svc] ? ' · ' + SVC[c.svc].name : ''}.`; return; }
+      if (c) { fillCase(c); m.style.color = 'var(--good)'; m.textContent = `Đã đọc yêu cầu ${c.code}${c.phone ? ' · Zalo ' + c.phone : ''}${SVC[c.svc] ? ' · ' + SVC[c.svc].name : ''}${c.gcnCount ? ` · khách gửi ${c.gcnCount} ảnh GCN (xem trên Telegram/Zalo)` : ''}.`; return; }
       const p = parseCoords($('caseText').value);
       if (!p.error) { fillCase({ lat: p.lat, lng: p.lng, road: parseInt($('c_road').value, 10), shape: $('c_shape').value, dt: num($('c_dt').value), ratio: num($('c_ratio').value) }); m.style.color = 'var(--warn)'; m.textContent = 'Chỉ tìm thấy tọa độ, hãy nhập thêm diện tích và tỷ lệ đất ở.'; return; }
       m.style.color = 'var(--bad)'; m.textContent = 'Không tìm thấy dòng #SBG2 hay tọa độ trong nội dung đã dán.';

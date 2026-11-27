@@ -13,7 +13,7 @@
 | Bước | Nội dung |
 |---|---|
 | 1. Dịch vụ & vị trí | Lời chào, chọn 1 trong 4 dịch vụ. Khối định vị tự mở: dán link Google Maps, nhập `Lat, Lng`, chạm ghim trên bản đồ hoặc GPS |
-| 2. Thông số | Diện tích (m²), Tỷ lệ đất ở (%, nút nhanh 100/80/50/30), Đường (4 loại), Hình dáng (3 mức) |
+| 2. Thông số | Diện tích (m²), Tỷ lệ đất ở (%, nút nhanh 100/80/50/30), Đường (4 loại), Hình dáng (3 mức), Đính kèm Giấy chứng nhận (không bắt buộc, tối đa 3 ảnh, cần tích đồng ý) |
 | 3. Thanh toán | Tóm tắt + mã `TBSB-XXXX`, VietQR đúng số tiền (ND `TBSB XXXX`), chụp hoặc chọn ảnh bill, số Zalo 10 chữ số |
 | 4. Hoàn tất | "Đã tiếp nhận yêu cầu!", gửi Telegram cho quản trị (nếu cấu hình), nút **Gửi trực tiếp sang Zalo Quản trị (0986.299.731)** copy sẵn nội dung đơn |
 
@@ -27,7 +27,8 @@
 Bản đồ của khách có ghim màu theo loại đường nhưng **không hiện đơn giá**, để không lộ kho giá.
 
 ### Tab Quản trị (nút "Quản trị" ở chân trang, hoặc thêm `#quantri` vào link)
-- Danh sách đơn đặt trên chính trình duyệt này (ảnh bill, SĐT, dịch vụ, trạng thái Telegram), bấm **Mở xử lý** để nạp ca.
+- Danh sách đơn đặt trên chính trình duyệt này: SĐT, dịch vụ, trạng thái Telegram, huy hiệu **Có ảnh GCN**, ảnh Bill và GCN xếp cạnh nhau (chạm để phóng to). Bấm **Mở xử lý** để nạp ca.
+- Ảnh được nén trên máy khách (rộng tối đa 1.200 px, JPEG 0,75) và lưu trong IndexedDB, nên không làm đầy localStorage.
 - Dán tin nhắn Zalo / Telegram có dòng `#SBG2|...` để đọc ca từ máy khách.
 - Bản đồ Leaflet: ghim màu theo loại đường hoặc khung giá, ghim xanh 1-2-3 nối nét đứt, ghim xám tham khảo; chạm thẻ để bật/tắt điểm.
 - Công cụ bổ trợ: chiết trừ – hao mòn, vốn hóa thu nhập, thặng dư.

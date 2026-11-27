@@ -304,22 +304,26 @@ Gói hội viên 1/3/6 tháng và gói tra nhanh 49.000đ **đã bỏ**.
 
 **Các bước**
 1. **Dịch vụ & vị trí:** chọn 1 trong 4 thẻ. Khối định vị tự mở: dán link Google Maps (`@lat,lng`, `?q=lat,lng`), nhập `Lat, Lng`, chạm ghim trên bản đồ hoặc GPS. Chặn nếu ngoài Nghệ An – Hà Tĩnh.
-2. **Thông số:** Diện tích (m²), Tỷ lệ đất ở (%), Đường (1–4), Hình dáng (VU / KV / KEM).
-3. **Thanh toán:** tóm tắt + mã `TBSB-XXXX`; VietQR đúng số tiền, nội dung `TBSB XXXX`; ảnh bill (chụp hoặc chọn ảnh có sẵn, nén JPEG ≤ 1024 px); số Zalo 10 chữ số. Nút "Hoàn tất" chỉ bật khi số Zalo hợp lệ; thiếu bill chỉ cảnh báo nhẹ.
+2. **Thông số:** Diện tích (m²), Tỷ lệ đất ở (%), Đường (1–4), Hình dáng (VU / KV / KEM), Đính kèm Giấy chứng nhận (không bắt buộc, tối đa 3 ảnh: trang thông tin thửa đất và trang sơ đồ). Có ảnh thì khách phải tích ô đồng ý gửi ảnh mới đi tiếp.
+3. **Thanh toán:** tóm tắt (có dòng `Giấy chứng nhận: Đã đính kèm X ảnh / Chưa đính kèm`) + mã `TBSB-XXXX`; VietQR đúng số tiền, nội dung `TBSB XXXX`; ảnh bill (chụp hoặc chọn ảnh có sẵn); số Zalo 10 chữ số. Nút "Hoàn tất" chỉ bật khi số Zalo hợp lệ; thiếu bill chỉ cảnh báo nhẹ.
 4. **Hoàn tất:** lưu đơn, gửi Telegram (nếu cấu hình), hiện "Đã tiếp nhận yêu cầu!" và nút "Gửi trực tiếp sang Zalo Quản trị (0986.299.731)": copy nội dung đơn rồi mở `https://zalo.me/0986299731`.
 
 **Mã đơn trong tin nhắn** (dán vào tab Quản trị để đọc lại):
 ```
-#SBG2|<mã>|<lat>|<lng>|<diện tích>|<tỷ lệ đất ở %>|<VU|KV|KEM>|<loại đường>|<dịch vụ>|<SĐT>
+#SBG2|<mã>|<lat>|<lng>|<diện tích>|<tỷ lệ đất ở %>|<VU|KV|KEM>|<loại đường>|<dịch vụ>|<SĐT>|<số ảnh GCN>
 ```
 Mã cũ `#SBG|mã|lat|lng|mt|sau|hình|đường|...` vẫn đọc được (diện tích = mt × sâu, tỷ lệ đất ở 100%).
 
 ## 9. Lưu đơn & giới hạn của bản tĩnh
 
-- Đơn lưu `localStorage['tbsb_orders']` (tối đa 30 đơn; đầy bộ nhớ thì xóa ảnh bill của đơn cũ nhất trước).
+- **Nén ảnh trên máy khách:** ảnh GCN và ảnh bill thu chiều rộng về tối đa 1.200 px (cao tối đa 4.000 px), JPEG chất lượng 0,75. Ảnh 3000×4000 còn khoảng 1200×1600.
+- Thông tin đơn lưu `localStorage['tbsb_orders']` (tối đa 30 đơn, mỗi đơn vài trăm byte). Ảnh bill + GCN lưu riêng trong **IndexedDB** (`tbsb/imgs`, khóa `mã-thời điểm`), không chiếm localStorage.
+- Đầy bộ nhớ IndexedDB: xóa ảnh của các đơn ngoài 10 đơn mới nhất rồi lưu lại; vẫn lỗi thì đơn ghi "Ảnh đã xóa do đầy bộ nhớ" (thông tin đơn vẫn giữ, ảnh vẫn có trên Telegram).
+- Ảnh GCN là dữ liệu cá nhân: chỉ gửi khi khách tích đồng ý; câu cam kết hiển thị là "chỉ dùng để đối chiếu thông số kỹ thuật cho yêu cầu này và không chia sẻ cho bên thứ ba". **Không** ghi "mã hóa", vì ảnh lưu và gửi ở dạng thường.
 - **localStorage chỉ nằm trên trình duyệt đã đặt đơn.** Đơn khách đặt trên điện thoại của họ không hiện ở tab Quản trị trên máy quản trị. Kênh nhận đơn từ máy khách là Telegram và Zalo.
-- Telegram: `sendPhoto` (kèm bill, caption ≤ 1024 ký tự) hoặc `sendMessage`. Thứ tự lấy cấu hình: `CONFIG.TG_PROXY_URL` → `CONFIG.TG_BOT_TOKEN/TG_CHAT_ID` → Cài đặt trên máy.
+- Telegram: 0 ảnh → `sendMessage`; 1 ảnh → `sendPhoto`; bill + GCN (2–4 ảnh) → `sendMediaGroup`, chú thích (≤ 1024 ký tự) ở ảnh đầu. Thứ tự lấy cấu hình: `CONFIG.TG_PROXY_URL` → `CONFIG.TG_BOT_TOKEN/TG_CHAT_ID` → Cài đặt trên máy.
   - Khuyến nghị dùng Cloudflare Worker (`worker/telegram-proxy.js`): token giữ trong biến môi trường, chỉ nhận `sendPhoto/sendMessage`, kiểm tra Origin.
   - Nhúng token thẳng vào `CONFIG` thì ai xem mã nguồn cũng đọc được và có thể spam/chiếm bot.
 - Tài khoản nhận tiền (`PAY_BIN/PAY_ACC/PAY_NAME`) và link Google Sheets (`SHEET_CSV`) cũng phải điền trong `CONFIG` thì điện thoại khách mới thấy đúng.
+- Tab Quản trị: đơn có ảnh GCN mang huy hiệu `Có ảnh GCN · X`; ảnh Bill, GCN 1–3 xếp cạnh nhau, chạm để phóng to và tải về.
 - Tab Quản trị mở bằng nút "Quản trị" ở chân trang hoặc `#quantri`; bản tĩnh không có mật khẩu thật.
