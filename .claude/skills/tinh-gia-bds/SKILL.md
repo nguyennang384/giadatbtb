@@ -291,7 +291,7 @@ Chi tiết hạng mục và ví dụ: `quy-tac-tinh-gia.md`.
 
 **Khoảng cách:** đường chim bay (Haversine), làm tròn đến mét.
 
-## 8. Dịch vụ & luồng đặt yêu cầu (Wizard 4 bước)
+## 8. Dịch vụ & luồng đặt yêu cầu (4 bước)
 
 | Mã | Dịch vụ | Giá |
 |---|---|---|
@@ -302,11 +302,15 @@ Chi tiết hạng mục và ví dụ: `quy-tac-tinh-gia.md`.
 
 Gói hội viên 1/3/6 tháng và gói tra nhanh 49.000đ **đã bỏ**.
 
-**Các bước**
-1. **Dịch vụ & vị trí:** chọn 1 trong 4 thẻ. Khối định vị tự mở: dán link Google Maps (`@lat,lng`, `?q=lat,lng`), nhập `Lat, Lng`, chạm ghim trên bản đồ hoặc GPS. Chặn nếu ngoài Nghệ An – Hà Tĩnh.
-2. **Thông số:** Diện tích (m²), Tỷ lệ đất ở (%), Đường (1–4), Hình dáng (VU / KV / KEM), Đính kèm Giấy chứng nhận (không bắt buộc, tối đa 3 ảnh: trang thông tin thửa đất và trang sơ đồ). Có ảnh thì khách phải tích ô đồng ý gửi ảnh mới đi tiếp.
-3. **Thanh toán:** tóm tắt (có dòng `Giấy chứng nhận: Đã đính kèm X ảnh / Chưa đính kèm`) + mã `TBSB-XXXX`; VietQR đúng số tiền, nội dung `TBSB XXXX`; ảnh bill (chụp hoặc chọn ảnh có sẵn); số Zalo 10 chữ số. Nút "Hoàn tất" chỉ bật khi số Zalo hợp lệ; thiếu bill chỉ cảnh báo nhẹ.
-4. **Hoàn tất:** lưu đơn, gửi Telegram (nếu cấu hình), hiện "Đã tiếp nhận yêu cầu!" và nút "Gửi trực tiếp sang Zalo Quản trị (0986.299.731)": copy nội dung đơn rồi mở `https://zalo.me/0986299731`.
+**Các bước** (thanh tiến trình 4 vạch: 1. Nhu cầu → 2. Vị trí → 3. Thông số → 4. Thanh toán & Hoàn tất)
+1. **Nhu cầu:** chọn 1 trong 4 thẻ, tự chuyển sang bước Vị trí.
+2. **Vị trí:** dán link Google Maps (`@lat,lng`, `?q=lat,lng`) hoặc nhập `Lat, Lng` (có nút Dán), bản đồ hiện sẵn để chạm/kéo ghim, nút "Vị trí của tôi" (GPS). Chặn nếu ngoài Nghệ An – Hà Tĩnh.
+3. **Thông số:** Diện tích (m²), Tỷ lệ đất ở (%), Đường (1–4), Hình dáng (VU / KV / KEM), Đính kèm Giấy chứng nhận (không bắt buộc, tối đa 3 ảnh: trang thông tin thửa đất và trang sơ đồ). Có ảnh thì khách phải tích ô đồng ý gửi ảnh mới đi tiếp.
+4. **Thanh toán:** tóm tắt (có dòng `Giấy chứng nhận: Đã đính kèm X ảnh / Chưa đính kèm`) + mã `TBSB-XXXX`; VietQR đúng số tiền, nội dung `TBSB XXXX`; ảnh bill (chụp hoặc chọn ảnh có sẵn); số Zalo 10 chữ số. Nút "Hoàn tất" chỉ bật khi số Zalo hợp lệ; thiếu bill chỉ cảnh báo nhẹ.
+5. **Hoàn tất** (vẫn thuộc vạch 4): lưu đơn, gửi Telegram (nếu cấu hình), hiện khung mã đơn có nút Copy, nút "Gửi nhanh qua Zalo Quản trị (0986.299.731)" (copy nội dung đơn rồi mở `https://zalo.me/0986299731`) và nút "Tra cứu lô khác".
+   - Tiêu đề "Đã gửi yêu cầu thành công!" chỉ hiện khi Telegram xác nhận đã nhận. Chưa cấu hình hoặc gửi lỗi thì hiện "Còn 1 bước: gửi yêu cầu qua Zalo" để khách không tưởng đơn đã tới quản trị.
+
+**Giao diện:** nền kem `#FBF8F3`, thẻ trắng viền `#E6E2D8`, màu chính xanh lục bảo `#0D4A3E`, nhấn hổ phách `#F4C16B` / `#D97706`, thành công `#16A34A`, chữ `#1E242B` / `#64748B`; khung tối đa 440px. Ảnh xuất (THÔNG BÁO SƠ BỘ GIÁ, Sodovitri.png) giữ bảng màu cố định riêng.
 
 **Mã đơn trong tin nhắn** (dán vào tab Quản trị để đọc lại):
 ```

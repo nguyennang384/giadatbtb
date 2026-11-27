@@ -8,14 +8,14 @@
 
 ## Tính năng
 
-### Trang khách (Wizard 4 bước trên điện thoại)
+### Trang khách (4 bước trên điện thoại, giao diện xanh lục bảo – kem)
 
 | Bước | Nội dung |
 |---|---|
-| 1. Dịch vụ & vị trí | Lời chào, chọn 1 trong 4 dịch vụ. Khối định vị tự mở: dán link Google Maps, nhập `Lat, Lng`, chạm ghim trên bản đồ hoặc GPS |
-| 2. Thông số | Diện tích (m²), Tỷ lệ đất ở (%, nút nhanh 100/80/50/30), Đường (4 loại), Hình dáng (3 mức), Đính kèm Giấy chứng nhận (không bắt buộc, tối đa 3 ảnh, cần tích đồng ý) |
-| 3. Thanh toán | Tóm tắt + mã `TBSB-XXXX`, VietQR đúng số tiền (ND `TBSB XXXX`), chụp hoặc chọn ảnh bill, số Zalo 10 chữ số |
-| 4. Hoàn tất | "Đã tiếp nhận yêu cầu!", gửi Telegram cho quản trị (nếu cấu hình), nút **Gửi trực tiếp sang Zalo Quản trị (0986.299.731)** copy sẵn nội dung đơn |
+| 1. Nhu cầu | Lời chào, chọn 1 trong 4 dịch vụ, tự chuyển sang bước 2 |
+| 2. Vị trí | Dán link Google Maps (nút Dán) hoặc nhập `Lat, Lng`; bản đồ hiện sẵn để chạm/kéo ghim; nút "Vị trí của tôi" |
+| 3. Thông số | Diện tích (m²), Tỷ lệ đất ở (%, nút nhanh 100/80/50/30), Đường (4 loại), Hình dáng (3 mức), Đính kèm Giấy chứng nhận (không bắt buộc, tối đa 3 ảnh, cần tích đồng ý) |
+| 4. Thanh toán & Hoàn tất | Tóm tắt + tổng tiền, VietQR (ND `TBSB XXXX`), thẻ ảnh bill, số Zalo 10 chữ số → màn hình hoàn tất có mã đơn + Copy, nút **Gửi nhanh qua Zalo Quản trị (0986.299.731)** và **Tra cứu lô khác** |
 
 | Dịch vụ | Giá |
 |---|---|

@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Thông Báo Sơ Bộ Giá</title>
 <meta name="claude:viewport-fit-sides" content="cover">
-<meta name="theme-color" content="#14213d">
+<meta name="theme-color" content="#FBF8F3">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap">
@@ -34,26 +34,26 @@
 <style>
   /* Layout: một cột mobile-first, header navy dính trên cùng, thẻ trắng xếp dọc; mẫu thông báo cố định tông navy – đồng */
   :root {
-    --bg: #eef1f6; --surface: #ffffff; --sunk: #f5f7fb; --ink: #14213d; --muted: #5b6680; --line: #d9dfea;
-    --navy: #14213d; --navy-ink: #ffffff; --gold: #b0843c; --teal: #0f7c7a;
-    --good: #12805c; --warn: #b26b00; --bad: #c0392b;
+    --bg: #FBF8F3; --surface: #FFFFFF; --sunk: #F6F2EA; --ink: #1E242B; --muted: #64748B; --line: #E6E2D8;
+    --navy: #0D4A3E; --navy-ink: #ffffff; --gold: #D97706; --amber: #F4C16B; --teal: #0D4A3E; --pri-soft: #E3F1EC; --track: #E2E8F0;
+    --good: #16A34A; --warn: #B45309; --bad: #DC2626;
   }
   @media (prefers-color-scheme: dark) {
     :root:not([data-theme="light"]) {
-      --bg: #0b1222; --surface: #121b30; --sunk: #0f1729; --ink: #e8edf7; --muted: #98a3bb; --line: #26324d;
-      --navy: #0a1020; --navy-ink: #f2f5fb; --gold: #d6a75a; --teal: #36b3ae;
-      --good: #3cc08f; --warn: #e3a23a; --bad: #ef6b5d; color-scheme: dark;
+      --bg: #0E1412; --surface: #151D1A; --sunk: #111815; --ink: #EEF2EF; --muted: #9AA8A2; --line: #26332E;
+      --navy: #13705C; --navy-ink: #ffffff; --gold: #F4C16B; --amber: #F4C16B; --teal: #5CC3A6; --pri-soft: #17322B; --track: #2B3833;
+      --good: #34C26A; --warn: #F0B04C; --bad: #F06A5D; color-scheme: dark;
     }
   }
   :root[data-theme="dark"] {
-    --bg: #0b1222; --surface: #121b30; --sunk: #0f1729; --ink: #e8edf7; --muted: #98a3bb; --line: #26324d;
-    --navy: #0a1020; --navy-ink: #f2f5fb; --gold: #d6a75a; --teal: #36b3ae;
-    --good: #3cc08f; --warn: #e3a23a; --bad: #ef6b5d; color-scheme: dark;
+    --bg: #0E1412; --surface: #151D1A; --sunk: #111815; --ink: #EEF2EF; --muted: #9AA8A2; --line: #26332E;
+    --navy: #13705C; --navy-ink: #ffffff; --gold: #F4C16B; --amber: #F4C16B; --teal: #5CC3A6; --pri-soft: #17322B; --track: #2B3833;
+    --good: #34C26A; --warn: #F0B04C; --bad: #F06A5D; color-scheme: dark;
   }
   [hidden] { display: none !important; }
   html, body { background: var(--bg); color: var(--ink); }
   body { font-family: "Be Vietnam Pro", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; -webkit-tap-highlight-color: transparent; }
-  body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top, 0px); z-index: 60; background: var(--navy); }
+  body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top, 0px); z-index: 60; background: var(--bg); }
   .gutter { padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
   .num { font-variant-numeric: tabular-nums; }
   .field { width: 100%; background: var(--sunk); border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px; font-size: 16px; color: var(--ink); outline: none; }
@@ -90,15 +90,6 @@
   #diag { position: fixed; left: -10000px; top: 0; width: 800px; height: 450px; display: flex; background: #fff; color: #14213d; font-family: "Be Vietnam Pro", Arial, sans-serif; }
   .badge { position: absolute; top: -9px; right: 10px; font-size: 10.5px; font-weight: 800; padding: 2px 8px; border-radius: 999px; letter-spacing: .02em; }
   /* Wizard khách */
-  .step { display: flex; flex-direction: column; align-items: center; gap: 4px; font-size: 11px; font-weight: 600; color: var(--muted); text-align: center; }
-  .step span { width: 28px; height: 28px; border-radius: 999px; display: grid; place-items: center; border: 2px solid var(--line); background: var(--surface); font-weight: 800; font-size: 12px; }
-  .step[aria-current="step"] { color: var(--ink); }
-  .step[aria-current="step"] span { background: var(--gold); border-color: var(--gold); color: #14213d; }
-  .step.done span { background: var(--teal); border-color: var(--teal); color: #fff; }
-  .svc-ic { flex: none; width: 46px; height: 46px; border-radius: 12px; display: grid; place-items: center; }
-  .svc-price { flex: none; font-weight: 800; font-size: 16px; color: var(--gold); }
-  .svc input:checked + div { border-color: var(--gold); box-shadow: 0 0 0 2px var(--gold) inset; background: color-mix(in srgb, var(--gold) 9%, var(--surface)); }
-  .svc input:focus-visible + div { outline: 2px solid var(--teal); outline-offset: 2px; }
   .opt { position: relative; display: block; }
   .opt input { position: absolute; opacity: 0; pointer-events: none; }
   .opt span { display: flex; align-items: center; gap: 12px; padding: 13px 14px; border: 1.5px solid var(--line); border-radius: 12px; font-weight: 600; font-size: 15px; cursor: pointer; background: var(--sunk); }
@@ -109,113 +100,170 @@
   .opt input:focus-visible + span { outline: 2px solid var(--teal); outline-offset: 2px; }
   .chip { padding: 10px 0; border-radius: 10px; border: 1.5px solid var(--line); font-weight: 700; background: var(--sunk); font-variant-numeric: tabular-nums; }
   .chip[aria-pressed="true"] { background: var(--navy); color: var(--navy-ink); border-color: var(--navy); }
+  /* ===== Design system emerald – cream (mobile-first, khung tối đa 440px) ===== */
+  .wrap { max-width: 440px; }
+  .hdr { background: color-mix(in srgb, var(--bg) 92%, transparent); backdrop-filter: saturate(1.4) blur(10px); -webkit-backdrop-filter: saturate(1.4) blur(10px); border-bottom: 1px solid var(--line); color: var(--ink); }
+  .logo { width: 34px; height: 34px; border-radius: 10px; display: grid; place-items: center; background: var(--navy); color: var(--amber); flex: none; }
+  .steps { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; list-style: none; margin-top: 0; }
+  .step { display: flex; flex-direction: column; gap: 5px; font-size: 10.5px; font-weight: 600; color: var(--muted); line-height: 1.2; }
+  .step i { display: block; height: 6px; border-radius: 999px; background: var(--track); transition: background .25s ease; }
+  .step.on i { background: var(--navy); }
+  .step[aria-current="step"] { color: var(--navy); font-weight: 800; }
+  :root[data-theme="dark"] .step[aria-current="step"], .dark-cur { color: var(--teal); }
+  .card { background: var(--surface); border: 1px solid var(--line); border-radius: 18px; box-shadow: 0 1px 2px rgba(30,36,43,.05); }
+  .loc-pill { display: inline-flex; align-items: center; gap: 5px; font-size: 12px; font-weight: 700; padding: 5px 11px; border-radius: 999px; background: var(--pri-soft); color: var(--navy); }
+  .chosen { font-size: 11.5px; font-weight: 700; padding: 5px 10px; border-radius: 999px; background: var(--pri-soft); color: var(--navy); text-align: right; }
+  .back { align-self: flex-start; font-size: 14px; font-weight: 700; color: var(--navy); }
+  .svc-ic { flex: none; width: 46px; height: 46px; border-radius: 14px; display: grid; place-items: center; }
+  .svc-price { flex: none; font-weight: 800; font-size: 16px; color: var(--navy); }
+  .svc .card { border-width: 1.5px; transition: border-color .15s ease, box-shadow .15s ease, transform .08s ease; }
+  .svc:active .card { transform: scale(.985); }
+  .svc-hot .card { border: 2px solid var(--navy); }
+  .svc input:checked + .card { border-color: var(--navy); box-shadow: 0 0 0 3px color-mix(in srgb, var(--navy) 18%, transparent); background: color-mix(in srgb, var(--navy) 5%, var(--surface)); }
+  .svc input:focus-visible + .card { outline: 2px solid var(--navy); outline-offset: 2px; }
+  .badge { position: absolute; top: -11px; left: 14px; right: auto; font-size: 11px; font-weight: 800; padding: 3px 10px; border-radius: 999px; background: var(--amber); color: #1E242B; box-shadow: 0 1px 3px rgba(0,0,0,.12); }
+  .field { background: var(--surface); }
+  .unit { position: absolute; right: 14px; top: 50%; transform: translateY(-50%); font-weight: 700; color: var(--muted); pointer-events: none; }
+  .chip { padding: 10px 0; border-radius: 999px; border: 1.5px solid var(--line); font-weight: 700; background: var(--surface); }
+  .chip[aria-pressed="true"] { background: var(--navy); color: #fff; border-color: var(--navy); }
+  .opt span { padding: 12px; font-size: 14px; border-radius: 14px; background: var(--surface); gap: 10px; min-height: 52px; line-height: 1.25; }
+  .opt span b { width: 24px; height: 24px; font-size: 12px; background: var(--sunk); }
+  .opt input:checked + span { border-color: var(--navy); background: var(--navy); color: #fff; }
+  .opt input:checked + span b { background: var(--amber); border-color: var(--amber); color: #1E242B; }
+  .opt-col span { flex-direction: column; justify-content: center; gap: 2px; text-align: center; padding: 10px 6px; border-radius: 14px; min-height: 58px; }
+  .opt-col span em { margin: 0; font-size: 11px; }
+  .drop { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; padding: 18px 12px; border: 2px dashed color-mix(in srgb, var(--navy) 35%, var(--line)); border-radius: 16px; background: color-mix(in srgb, var(--navy) 4%, var(--surface)); color: var(--navy); cursor: pointer; text-align: center; }
+  .drop .text-muted { color: var(--muted); }
+  .drop-ic { width: 40px; height: 40px; border-radius: 12px; display: grid; place-items: center; background: var(--pri-soft); color: var(--navy); }
+  .fcard { display: flex; align-items: center; gap: 12px; padding: 10px; border: 1px solid var(--line); border-radius: 14px; background: var(--surface); position: relative; }
+  .fcard img { width: 52px; height: 52px; object-fit: cover; border-radius: 10px; border: 1px solid var(--line); flex: none; background: var(--sunk); }
+  .fbar { height: 4px; border-radius: 999px; background: var(--track); margin-top: 6px; overflow: hidden; }
+  .fbar i { display: block; height: 100%; width: 100%; background: var(--good); border-radius: 999px; }
+  .fx { flex: none; width: 30px; height: 30px; border-radius: 999px; display: grid; place-items: center; font-size: 18px; font-weight: 700; color: var(--muted); background: var(--sunk); }
+  .fx:hover { color: var(--bad); }
+  .btn-pri { display: flex; align-items: center; justify-content: center; width: 100%; min-height: 54px; padding: 14px 20px; border-radius: 999px; font-weight: 800; font-size: 16px; background: var(--navy); color: #fff; box-shadow: 0 6px 16px -6px color-mix(in srgb, var(--navy) 70%, transparent); transition: transform .08s ease; }
+  .btn-pri:active { transform: scale(.98); }
+  .btn-sec { width: 100%; min-height: 50px; border-radius: 999px; font-weight: 700; font-size: 15px; background: var(--pri-soft); color: var(--navy); }
+  .dock { position: sticky; bottom: 0; z-index: 20; padding: 14px 0 calc(14px + env(safe-area-inset-bottom, 0px)); margin-top: 4px; background: linear-gradient(to top, var(--bg) 72%, transparent); }
+  .done-ic { width: 76px; height: 76px; border-radius: 999px; display: grid; place-items: center; background: #16A34A; box-shadow: 0 0 0 10px color-mix(in srgb, #16A34A 16%, transparent); margin: 6px 0 4px; }
+  .base-sw button[aria-pressed="true"] { background: #0D4A3E; }
+  .coord-card { border-radius: 14px; }
+  .lbl { letter-spacing: .03em; }
 </style>
 </head>
 <body>
 
 <div class="min-h-screen pb-8">
-  <header class="sticky z-50 bg-navy text-navyink shadow-md" style="top: env(safe-area-inset-top, 0px)">
-    <div class="gutter py-3 max-w-xl mx-auto flex items-center justify-between gap-3">
+  <header class="hdr sticky z-50" style="top: env(safe-area-inset-top, 0px)">
+    <div class="gutter pt-3 pb-2 wrap mx-auto flex items-center justify-between gap-3">
       <div class="min-w-0">
-        <div id="hdrSub" class="text-[11px] font-semibold tracking-[.18em] uppercase" style="color: var(--gold)">Nghệ An – Hà Tĩnh</div>
-        <h1 class="text-base font-extrabold leading-tight" style="text-wrap: balance">Dữ liệu &amp; Sơ bộ giá BĐS</h1>
+        <div class="flex items-center gap-2.5">
+          <span class="logo" aria-hidden="true"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M3 21h18M5 21V10l7-6 7 6v11M9 21v-6h6v6"/></svg></span>
+          <div class="min-w-0"><div id="hdrSub" class="text-[10.5px] font-bold tracking-[.16em] uppercase" style="color: var(--gold)">Nghệ An – Hà Tĩnh</div>
+          <h1 class="text-[15px] font-extrabold leading-tight">Dữ liệu &amp; Sơ bộ giá BĐS</h1></div>
+        </div>
       </div>
       <div id="adminBar" class="flex gap-2 shrink-0" hidden>
-        <button id="openSettings" type="button" class="btn !py-2 !px-3 text-sm border border-white/25 text-navyink" aria-label="Cài đặt dữ liệu, tài khoản nhận tiền và Telegram">
+        <button id="openSettings" type="button" class="btn !py-2 !px-3 text-sm border border-line bg-surface" aria-label="Cài đặt dữ liệu, tài khoản nhận tiền và Telegram">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg><span class="sr-only">Cài đặt</span>
         </button>
-        <button id="backBtn" type="button" class="btn !py-2 !px-3 text-sm" style="background: var(--gold); color: #14213d">Trang khách</button>
+        <button id="backBtn" type="button" class="btn !py-2 !px-4 !rounded-full text-sm" style="background: var(--navy); color: #fff">Trang khách</button>
       </div>
     </div>
+    <ol id="stepper" class="steps gutter wrap mx-auto pb-3" aria-label="Tiến trình gửi yêu cầu">
+      <li data-s="1" class="step"><i></i><span>1. Nhu cầu</span></li>
+      <li data-s="2" class="step"><i></i><span>2. Vị trí</span></li>
+      <li data-s="3" class="step"><i></i><span>3. Thông số</span></li>
+      <li data-s="4" class="step"><i></i><span>4. Thanh toán &amp; Hoàn tất</span></li>
+    </ol>
   </header>
 
-  <!-- ================= TAB 1: KHÁCH HÀNG (WIZARD 4 BƯỚC) ================= -->
-  <main id="tab1" class="gutter max-w-xl mx-auto mt-4 flex flex-col gap-4">
-    <ol id="stepper" class="grid grid-cols-4 gap-1.5" aria-label="Các bước gửi yêu cầu">
-      <li data-s="1" class="step"><span>1</span>Dịch vụ</li>
-      <li data-s="2" class="step"><span>2</span>Thông số</li>
-      <li data-s="3" class="step"><span>3</span>Thanh toán</li>
-      <li data-s="4" class="step"><span>4</span>Hoàn tất</li>
-    </ol>
+  <!-- ================= TAB 1: KHÁCH HÀNG (4 BƯỚC: Nhu cầu → Vị trí → Thông số → Thanh toán & Hoàn tất) ================= -->
+  <main id="tab1" class="wrap gutter mx-auto mt-4 flex flex-col gap-4">
 
-    <!-- Bước 1: lời chào + chọn dịch vụ + định vị -->
+    <!-- Bước 1: Nhu cầu -->
     <section id="step1" class="flex flex-col gap-4">
-      <div class="rounded-2xl p-4 border border-line bg-surface">
-        <p class="text-[15px] leading-relaxed"><b>Xin chào anh/chị!</b> Hệ thống Dữ liệu &amp; Sơ bộ giá BĐS Nghệ An – Hà Tĩnh hỗ trợ tra cứu khung giá thị trường và kiểm tra quy hoạch nhanh trước khi chốt giao dịch.</p>
+      <div class="flex flex-col gap-2">
+        <span class="loc-pill self-start"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" aria-hidden="true"><path d="M12 21s7-6.2 7-12a7 7 0 1 0-14 0c0 5.8 7 12 7 12z"/><circle cx="12" cy="9" r="2.5"/></svg>Nghệ An – Hà Tĩnh</span>
+        <h2 class="text-[22px] font-extrabold leading-tight">Xin chào anh/chị!</h2>
+        <p class="text-[15px] leading-relaxed text-muted">Hệ thống Dữ liệu &amp; Sơ bộ giá BĐS hỗ trợ tra cứu khung giá thị trường và kiểm tra quy hoạch nhanh trước khi chốt giao dịch.</p>
       </div>
-      <h2 class="text-xl font-extrabold">Bạn cần gì?</h2>
+      <h3 class="text-lg font-extrabold mt-1">Bạn cần gì?</h3>
       <div id="svcList" class="grid gap-3" role="radiogroup" aria-label="Chọn dịch vụ">
         <label class="svc relative block cursor-pointer"><input type="radio" name="svc" value="dg" class="sr-only">
-          <div class="rounded-2xl border-2 border-line bg-surface p-4 flex items-center gap-3">
-            <span class="svc-ic" style="background:#e8eefc;color:#1d4ed8"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M3 21h18M5 21V10l7-6 7 6v11M9 21v-6h6v6"/></svg></span>
-            <span class="min-w-0 flex-1"><span class="block font-extrabold text-[16px] leading-snug">Định giá sơ bộ</span><span class="block text-xs text-muted mt-0.5">Khung giá thị trường từ điểm dữ liệu đối chiếu gần nhất</span></span>
+          <div class="card p-4 flex items-center gap-3">
+            <span class="svc-ic" style="background:#E3F1EC;color:#0D4A3E"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M3 21h18M5 21V10l7-6 7 6v11M9 21v-6h6v6"/></svg></span>
+            <span class="min-w-0 flex-1"><span class="block font-extrabold text-[16px] leading-snug">Định giá sơ bộ</span><span class="block text-xs text-muted mt-0.5">Sơ bộ khung giá tham chiếu theo dữ liệu khu vực</span></span>
             <span class="svc-price num">150.000đ</span>
           </div></label>
         <label class="svc relative block cursor-pointer"><input type="radio" name="svc" value="qh" class="sr-only">
-          <div class="rounded-2xl border-2 border-line bg-surface p-4 flex items-center gap-3">
-            <span class="svc-ic" style="background:#e3f4ec;color:#12805c"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M9 4 3 6v14l6-2 6 2 6-2V4l-6 2-6-2zM9 4v14M15 6v14"/></svg></span>
-            <span class="min-w-0 flex-1"><span class="block font-extrabold text-[16px] leading-snug">Check quy hoạch</span><span class="block text-xs text-muted mt-0.5">Kiểm tra nhanh quy hoạch, hành lang mở đường</span></span>
+          <div class="card p-4 flex items-center gap-3">
+            <span class="svc-ic" style="background:#FDF1DC;color:#B45309"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M9 4 3 6v14l6-2 6 2 6-2V4l-6 2-6-2zM9 4v14M15 6v14"/></svg></span>
+            <span class="min-w-0 flex-1"><span class="block font-extrabold text-[16px] leading-snug">Check quy hoạch</span><span class="block text-xs text-muted mt-0.5">Kiểm tra quy hoạch sử dụng đất &amp; chỉ giới mở đường</span></span>
             <span class="svc-price num">150.000đ</span>
           </div></label>
-        <label class="svc relative block cursor-pointer"><input type="radio" name="svc" value="combo" class="sr-only">
-          <div class="rounded-2xl border-2 border-line bg-surface p-4 flex items-center gap-3">
-            <span class="svc-ic" style="background:#fbefd9;color:#9a5b00"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="m12 3 2.6 5.6 6.1.7-4.5 4.2 1.2 6L12 16.6 6.6 19.5l1.2-6L3.3 9.3l6.1-.7z"/></svg></span>
-            <span class="min-w-0 flex-1"><span class="block font-extrabold text-[16px] leading-snug">Combo Định giá + Check quy hoạch</span><span class="block text-xs text-muted mt-0.5">Đủ cả khung giá và quy hoạch, tiết kiệm hơn mua lẻ</span></span>
+        <label class="svc svc-hot relative block cursor-pointer mt-2"><input type="radio" name="svc" value="combo" class="sr-only">
+          <div class="card p-4 flex items-center gap-3">
+            <span class="svc-ic" style="background:#0D4A3E;color:#F4C16B"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="m12 3 2.6 5.6 6.1.7-4.5 4.2 1.2 6L12 16.6 6.6 19.5l1.2-6L3.3 9.3l6.1-.7z"/></svg></span>
+            <span class="min-w-0 flex-1"><span class="block font-extrabold text-[16px] leading-snug">Combo Định giá + Check quy hoạch</span><span class="block text-xs text-muted mt-0.5">Đủ khung giá và quy hoạch, tiết kiệm hơn mua lẻ</span></span>
             <span class="svc-price num">300.000đ</span>
           </div>
-          <span class="badge" style="background: var(--gold); color: #14213d">Phổ biến nhất</span></label>
+          <span class="badge">⚡ Phổ biến nhất</span></label>
         <label class="svc relative block cursor-pointer"><input type="radio" name="svc" value="ks" class="sr-only">
-          <div class="rounded-2xl border-2 border-line bg-surface p-4 flex items-center gap-3">
-            <span class="svc-ic" style="background:#fde7e4;color:#b42318"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12 21s7-6.2 7-12a7 7 0 1 0-14 0c0 5.8 7 12 7 12z"/><circle cx="12" cy="9" r="2.5"/></svg></span>
-            <span class="min-w-0 flex-1"><span class="block font-extrabold text-[16px] leading-snug">Khảo sát thị trường</span><span class="block text-xs text-muted mt-0.5">Kiểm tra thực địa</span></span>
+          <div class="card p-4 flex items-center gap-3">
+            <span class="svc-ic" style="background:#EEE9FB;color:#6D28D9"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12 21s7-6.2 7-12a7 7 0 1 0-14 0c0 5.8 7 12 7 12z"/><circle cx="12" cy="9" r="2.5"/></svg></span>
+            <span class="min-w-0 flex-1"><span class="block font-extrabold text-[16px] leading-snug">Khảo sát thị trường</span><span class="block text-xs text-muted mt-0.5">Kiểm tra thực địa, hình thể &amp; mặt bằng giá trực tiếp</span></span>
             <span class="svc-price num">500.000đ</span>
           </div></label>
       </div>
-
-      <div id="locBlock" class="rounded-2xl border border-line bg-surface p-4 flex flex-col gap-3 scroll-mt-4" hidden>
-        <div class="flex items-center justify-between gap-2">
-          <h3 class="font-bold">Vị trí thửa đất</h3>
-          <span id="svcChosen" class="text-xs font-semibold rounded-full px-2.5 py-1 text-right" style="background: var(--sunk)"></span>
-        </div>
-        <p class="italic text-[15px]">bạn hãy dán link vị trí hoặc nhập tọa độ</p>
-        <input id="locInput" class="field" autocomplete="off" placeholder="Link Google Maps hoặc 18.6702, 105.6985" aria-label="Link vị trí hoặc tọa độ">
-        <p id="locMsg" class="text-xs text-muted -mt-1" aria-live="polite"></p>
-        <div class="grid grid-cols-[1fr_auto] gap-2">
-          <button type="button" id="pickMapBtn" class="btn text-sm border-2" style="border-color: var(--navy)">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12 21s7-6.2 7-12a7 7 0 1 0-14 0c0 5.8 7 12 7 12z"/><circle cx="12" cy="9" r="2.5"/></svg>
-            Chạm chọn ghim trên bản đồ</button>
-          <button type="button" id="gpsBtn" class="btn text-sm border border-line" aria-label="Lấy vị trí hiện tại bằng GPS">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/><circle cx="12" cy="12" r="7"/></svg>GPS</button>
-        </div>
-        <div id="mapBox" class="flex flex-col gap-2" hidden>
-          <div class="map-wrap rounded-xl overflow-hidden border border-line">
-            <div id="map" role="application" aria-label="Bản đồ chọn vị trí thửa đất"></div>
-            <div class="coord-card">
-              <div class="min-w-0 flex-1">
-                <div class="text-[10px] font-bold tracking-[.12em] uppercase" style="color:#8a6327">Vị trí tra cứu</div>
-                <div id="ccLL" class="font-mono text-[13px] font-bold num truncate">—</div>
-                <div id="ccMsg" class="text-[10.5px] truncate" style="color:#5b6680"></div>
-              </div>
-              <button type="button" id="ccCopy" class="btn !py-1.5 !px-3 text-xs" style="background:#14213d;color:#fff">Copy</button>
-            </div>
-          </div>
-          <p class="text-xs text-muted">Chạm vào bản đồ hoặc kéo ghim cam tới đúng thửa đất. Chấm màu là điểm dữ liệu thị trường, tô theo loại đường.</p>
-          <div id="legend" class="flex flex-wrap gap-x-3 gap-y-1.5 text-[11.5px]"></div>
-          <p id="mapMsg" class="text-xs" aria-live="polite"></p>
-        </div>
-        <button type="button" id="toStep2" class="btn w-full text-base !py-4" style="background: var(--navy); color: var(--navy-ink)">Tiếp tục nhập thông số →</button>
-      </div>
     </section>
 
-    <!-- Bước 2: thông số thửa đất -->
-    <section id="step2" class="flex flex-col gap-4" hidden>
-      <button type="button" data-back="1" class="self-start text-sm font-semibold" style="color: var(--teal)">← Quay lại</button>
+    <!-- Bước 2: Vị trí -->
+    <section id="step2" class="flex flex-col gap-3" hidden>
+      <button type="button" data-back="1" class="back">← Đổi nhu cầu</button>
+      <div class="flex flex-col items-start gap-1.5">
+        <h2 class="text-xl font-extrabold">Vị trí thửa đất</h2>
+        <span id="svcChosen" class="chosen"></span>
+      </div>
+      <p class="italic text-[15px]">bạn hãy dán link vị trí hoặc nhập tọa độ</p>
+      <div class="relative">
+        <input id="locInput" class="field !rounded-xl !pr-[84px]" autocomplete="off" placeholder="Link Google Maps hoặc 18.6702, 105.6985" aria-label="Link vị trí hoặc tọa độ">
+        <button type="button" id="pasteBtn" class="absolute right-1.5 top-1/2 -translate-y-1/2 rounded-lg px-3 py-1.5 text-xs font-bold" style="background: var(--navy); color: #fff">Dán</button>
+      </div>
+      <p id="locMsg" class="text-xs text-muted -mt-1" aria-live="polite"></p>
+      <div id="mapBox" class="flex flex-col gap-2">
+        <div class="map-wrap rounded-2xl overflow-hidden border border-line shadow-sm">
+          <div id="map" role="application" aria-label="Bản đồ chọn vị trí thửa đất"></div>
+          <div class="coord-card">
+            <div class="min-w-0 flex-1">
+              <div class="text-[10px] font-bold tracking-[.12em] uppercase" style="color:#B45309">Vị trí tra cứu</div>
+              <div id="ccLL" class="font-mono text-[13px] font-bold num truncate">—</div>
+              <div id="ccMsg" class="text-[10.5px] truncate" style="color:#64748B"></div>
+            </div>
+            <button type="button" id="ccCopy" class="rounded-full px-3 py-1.5 text-xs font-bold" style="background:#0D4A3E;color:#fff">Copy</button>
+          </div>
+        </div>
+        <div class="flex items-center justify-between gap-2">
+          <p class="text-xs text-muted">Chạm bản đồ hoặc kéo ghim vàng tới đúng thửa đất.</p>
+          <button type="button" id="gpsBtn" class="shrink-0 rounded-full border border-line bg-surface px-3 py-1.5 text-xs font-bold inline-flex items-center gap-1.5" aria-label="Lấy vị trí hiện tại bằng GPS">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/><circle cx="12" cy="12" r="7"/></svg>Vị trí của tôi</button>
+        </div>
+        <div id="legend" class="flex flex-wrap gap-x-3 gap-y-1.5 text-[11.5px]"></div>
+        <p id="mapMsg" class="text-xs" aria-live="polite"></p>
+      </div>
+      <div class="dock"><button type="button" id="toStep2" class="btn-pri">Tiếp tục nhập thông số →</button></div>
+    </section>
+
+    <!-- Bước 3: Thông số + Giấy chứng nhận -->
+    <section id="step3" class="flex flex-col gap-4" hidden>
+      <button type="button" data-back="2" class="back">← Đổi vị trí</button>
       <h2 class="text-xl font-extrabold">Thông số thửa đất</h2>
-      <div class="rounded-2xl border border-line bg-surface p-4 flex flex-col gap-4">
-        <div><label class="lbl" for="w_dt">Diện tích (m²)</label><input id="w_dt" class="field num !text-lg" inputmode="decimal" placeholder="VD: 150" autocomplete="off"></div>
+      <div class="card p-4 flex flex-col gap-4">
+        <div><label class="lbl" for="w_dt">Diện tích (m²)</label>
+          <div class="relative"><input id="w_dt" class="field num !text-xl !font-bold !rounded-xl !pr-12" inputmode="decimal" placeholder="VD: 150" autocomplete="off"><span class="unit">m²</span></div></div>
         <div>
           <label class="lbl" for="w_ratio">Tỷ lệ đất ở (%)</label>
-          <input id="w_ratio" class="field num !text-lg" inputmode="decimal" value="100" autocomplete="off">
+          <div class="relative"><input id="w_ratio" class="field num !text-xl !font-bold !rounded-xl !pr-12" inputmode="decimal" value="100" autocomplete="off"><span class="unit">%</span></div>
           <div id="ratioBtns" class="grid grid-cols-4 gap-2 mt-2">
             <button type="button" class="chip" data-ratio="100" aria-pressed="true">100%</button>
             <button type="button" class="chip" data-ratio="80" aria-pressed="false">80%</button>
@@ -225,26 +273,35 @@
           <p id="ratioHint" class="text-xs text-muted mt-2"></p>
         </div>
       </div>
-      <fieldset class="rounded-2xl border border-line bg-surface p-4 flex flex-col gap-2">
-        <legend class="lbl !mb-0 px-1">Đường vào thửa đất</legend>
-        <label class="opt"><input type="radio" name="road" value="1"><span><b>1</b>Đường lớn / Quốc lộ / Tỉnh lộ</span></label>
-        <label class="opt"><input type="radio" name="road" value="2"><span><b>2</b>Đường ô tô tránh nhau</span></label>
-        <label class="opt"><input type="radio" name="road" value="3"><span><b>3</b>Đường ô tô vào tận đất</span></label>
-        <label class="opt"><input type="radio" name="road" value="4"><span><b>4</b>Ngõ xe máy</span></label>
+      <fieldset class="card p-4 flex flex-col gap-2">
+        <legend class="sr-only">Đường vào thửa đất</legend>
+        <span class="lbl !mb-1" aria-hidden="true">Đường (chọn 1 trong 4)</span>
+        <div class="grid grid-cols-2 gap-2">
+          <label class="opt"><input type="radio" name="road" value="1"><span><b>1</b>Đường lớn / QL / TL</span></label>
+          <label class="opt"><input type="radio" name="road" value="2"><span><b>2</b>Ô tô tránh nhau</span></label>
+          <label class="opt"><input type="radio" name="road" value="3"><span><b>3</b>Ô tô vào tận đất</span></label>
+          <label class="opt"><input type="radio" name="road" value="4"><span><b>4</b>Ngõ xe máy</span></label>
+        </div>
       </fieldset>
-      <fieldset class="rounded-2xl border border-line bg-surface p-4 flex flex-col gap-2">
-        <legend class="lbl !mb-0 px-1">Hình dáng thửa đất</legend>
-        <label class="opt"><input type="radio" name="shape" value="VU"><span><b><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true"><rect x="1.5" y="1.5" width="11" height="11" fill="currentColor"/></svg></b>Vuông<em data-k="VU"></em></span></label>
-        <label class="opt"><input type="radio" name="shape" value="KV"><span><b><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true"><path d="M1.5 3 12.5 1.5v11L1.5 11z" fill="currentColor"/></svg></b>Không vuông<em data-k="KV"></em></span></label>
-        <label class="opt"><input type="radio" name="shape" value="KEM"><span><b><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true"><path d="M1.5 1.5h6v5h5v6h-11z" fill="currentColor"/></svg></b>Kém (méo, chữ L, đâm đường)<em data-k="KEM"></em></span></label>
+      <fieldset class="card p-4 flex flex-col gap-2">
+        <legend class="sr-only">Hình dạng thửa đất</legend>
+        <span class="lbl !mb-1" aria-hidden="true">Hình dạng (chọn 1 trong 3)</span>
+        <div class="grid grid-cols-3 gap-2">
+          <label class="opt opt-col"><input type="radio" name="shape" value="VU"><span>Vuông<em data-k="VU"></em></span></label>
+          <label class="opt opt-col"><input type="radio" name="shape" value="KV"><span>Không vuông<em data-k="KV"></em></span></label>
+          <label class="opt opt-col"><input type="radio" name="shape" value="KEM"><span>Kém<em data-k="KEM"></em></span></label>
+        </div>
+        <p class="text-[11px] text-muted">Kém: méo, chữ L, đâm đường hoặc nhiều cạnh gãy.</p>
       </fieldset>
-      <div class="rounded-2xl border border-line bg-surface p-4 flex flex-col gap-3">
-        <h3 class="font-bold">Đính kèm Giấy chứng nhận (Không bắt buộc)</h3>
+      <div class="card p-4 flex flex-col gap-3">
+        <h3 class="font-bold">Đính kèm Giấy chứng nhận <span class="font-medium text-muted">(Không bắt buộc)</span></h3>
         <p class="italic text-sm text-muted -mt-1">Nếu có sẵn, anh/chị chụp hoặc tải lên trang thông tin thửa đất &amp; trang sơ đồ để kiểm tra quy hoạch, kích thước chuẩn xác hơn.</p>
-        <label for="gcnInput" id="gcnPick" class="btn text-sm border-2 border-dashed cursor-pointer" style="border-color: var(--line)">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M4 8h3l2-3h6l2 3h3v11H4z"/><circle cx="12" cy="13" r="3.5"/></svg>Chụp hoặc chọn ảnh (tối đa 3)</label>
+        <label for="gcnInput" id="gcnPick" class="drop">
+          <span class="drop-ic"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12 16V4M7 9l5-5 5 5"/><path d="M4 16v3a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-3"/></svg></span>
+          <span class="font-bold text-sm">Chụp hoặc chọn ảnh</span>
+          <span class="text-xs text-muted">Tối đa 3 ảnh · tự nén còn rộng 1.200px</span></label>
         <input id="gcnInput" type="file" accept="image/*" multiple class="sr-only">
-        <ul id="gcnList" class="grid grid-cols-3 gap-2" aria-label="Ảnh Giấy chứng nhận đã chọn"></ul>
+        <ul id="gcnList" class="flex flex-col gap-2" aria-label="Ảnh Giấy chứng nhận đã chọn"></ul>
         <p id="gcnMsg" class="text-xs" aria-live="polite"></p>
         <label id="gcnConsentWrap" class="flex gap-2.5 items-start text-sm cursor-pointer" hidden>
           <input type="checkbox" id="gcnConsent" class="mt-0.5 w-5 h-5 shrink-0" style="accent-color: var(--navy)">
@@ -253,67 +310,69 @@
         <p class="text-xs text-muted">Ảnh được nén trên máy trước khi gửi, chỉ dùng để đối chiếu thông số kỹ thuật cho yêu cầu này và không chia sẻ cho bên thứ ba.</p>
       </div>
       <p id="s2Msg" class="text-sm font-semibold" style="color: var(--bad)" aria-live="polite"></p>
-      <button type="button" id="doneStep2" class="btn w-full text-lg !py-4" style="background: var(--gold); color: #14213d">Xong</button>
+      <div class="dock"><button type="button" id="doneStep2" class="btn-pri">Xong</button></div>
     </section>
 
-    <!-- Bước 3: xác nhận + thanh toán -->
-    <section id="step3" class="flex flex-col gap-4" hidden>
-      <button type="button" data-back="2" class="self-start text-sm font-semibold" style="color: var(--teal)">← Sửa thông số</button>
-      <h2 class="text-xl font-extrabold">Xác nhận &amp; thanh toán</h2>
-      <div class="rounded-2xl border border-line bg-surface overflow-hidden">
-        <div class="px-4 py-3 flex justify-between items-center gap-2" style="background: var(--navy); color: var(--navy-ink)">
-          <span class="text-[11px] font-semibold tracking-[.14em] uppercase" style="color: var(--gold)">Mã yêu cầu</span>
+    <!-- Bước 4: Thanh toán -->
+    <section id="step4" class="flex flex-col gap-4" hidden>
+      <button type="button" data-back="3" class="back">← Sửa thông số</button>
+      <h2 class="text-xl font-extrabold">Thanh toán</h2>
+      <div class="card overflow-hidden">
+        <div class="px-4 py-3 flex justify-between items-center gap-2" style="background: var(--navy); color: #fff">
+          <span class="text-[11px] font-semibold tracking-[.14em] uppercase" style="color: #F4C16B">Mã yêu cầu</span>
           <span id="sumCode" class="font-mono font-extrabold text-lg num"></span>
         </div>
         <dl id="sumBox" class="px-4 py-1 text-sm"></dl>
       </div>
-      <div class="rounded-2xl border border-line bg-surface p-4 flex flex-col gap-3">
+      <div class="card p-4 flex flex-col gap-3">
         <h3 class="font-bold">Quét VietQR để thanh toán</h3>
         <div id="qrSlot"></div>
         <p class="text-xs text-muted">Nội dung chuyển khoản: <b id="payInfo" class="font-mono" style="color: var(--ink)"></b>. Giữ nguyên nội dung để đối soát nhanh.</p>
       </div>
-      <div class="rounded-2xl border border-line bg-surface p-4 flex flex-col gap-3">
-        <span class="lbl !mb-0">Ảnh bill chuyển khoản</span>
+      <div class="card p-4 flex flex-col gap-3">
+        <h3 class="font-bold">Ảnh bill chuyển khoản</h3>
         <div class="grid grid-cols-2 gap-2">
-          <label for="billCam" class="btn text-sm border-2 border-dashed cursor-pointer" style="border-color: var(--line)">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M4 8h3l2-3h6l2 3h3v11H4z"/><circle cx="12" cy="13" r="3.5"/></svg>Chụp bill</label>
-          <label for="billFile" class="btn text-sm border-2 border-dashed cursor-pointer" style="border-color: var(--line)">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="m3 16 5-5 4 4 3-3 6 6"/></svg>Chọn ảnh có sẵn</label>
+          <label for="billCam" class="drop !py-3 !flex-row !gap-2"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M4 8h3l2-3h6l2 3h3v11H4z"/><circle cx="12" cy="13" r="3.5"/></svg><span class="font-bold text-sm">Chụp bill</span></label>
+          <label for="billFile" class="drop !py-3 !flex-row !gap-2"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="m3 16 5-5 4 4 3-3 6 6"/></svg><span class="font-bold text-sm">Ảnh có sẵn</span></label>
         </div>
         <input id="billCam" type="file" accept="image/*" capture="environment" class="sr-only">
         <input id="billFile" type="file" accept="image/*" class="sr-only">
-        <div id="billPrevBox" class="flex items-center gap-3" hidden>
-          <img id="billPrev" class="w-20 h-20 object-cover rounded-lg border border-line" alt="Ảnh bill đã chọn">
-          <div class="text-xs min-w-0"><div id="billName" class="font-semibold truncate"></div><button type="button" id="billClear" class="underline mt-1" style="color: var(--bad)">Bỏ ảnh</button></div>
+        <div id="billPrevBox" class="fcard" hidden>
+          <img id="billPrev" alt="Ảnh bill đã chọn">
+          <div class="min-w-0 flex-1"><div id="billName" class="text-sm font-semibold truncate"></div><div class="fbar"><i></i></div></div>
+          <button type="button" id="billClear" class="fx" aria-label="Bỏ ảnh bill">×</button>
         </div>
-        <div><label class="lbl" for="w_phone">Số Zalo nhận kết quả</label><input id="w_phone" type="tel" inputmode="numeric" autocomplete="tel" class="field num !text-lg" placeholder="09xx xxx xxx" maxlength="14"></div>
+        <div><label class="lbl" for="w_phone">Số Zalo nhận kết quả</label><input id="w_phone" type="tel" inputmode="numeric" autocomplete="tel" class="field num !text-lg !rounded-xl" placeholder="09xx xxx xxx" maxlength="14"></div>
         <p id="phoneMsg" class="text-xs -mt-1" aria-live="polite"></p>
       </div>
-      <p id="billWarn" class="text-sm rounded-xl px-3 py-2" style="background: color-mix(in srgb, var(--warn) 14%, var(--surface)); color: var(--ink)" hidden>Chưa đính kèm ảnh bill. Vẫn hoàn tất được, nhưng nhớ gửi ảnh bill qua Zalo để xử lý nhanh hơn.</p>
-      <button type="button" id="finishBtn" class="btn w-full text-lg !py-4 disabled:opacity-40 disabled:cursor-not-allowed" style="background: var(--gold); color: #14213d" disabled>Hoàn tất</button>
+      <p id="billWarn" class="text-sm rounded-xl px-3 py-2" style="background: #FDF1DC; color: #7C4A03" hidden>Chưa đính kèm ảnh bill. Vẫn hoàn tất được, nhưng nhớ gửi ảnh bill qua Zalo để xử lý nhanh hơn.</p>
+      <div class="dock"><button type="button" id="finishBtn" class="btn-pri disabled:opacity-40 disabled:cursor-not-allowed" disabled>Hoàn tất</button></div>
     </section>
 
-    <!-- Bước 4: đã tiếp nhận -->
-    <section id="step4" class="flex flex-col gap-4" hidden>
-      <div class="rounded-2xl p-5 text-center flex flex-col items-center gap-3 border-2" style="border-color: var(--good); background: color-mix(in srgb, var(--good) 8%, var(--surface))">
-        <svg width="56" height="56" viewBox="0 0 24 24" fill="none" stroke="var(--good)" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="m7.5 12.5 3 3 6-6.5"/></svg>
-        <h2 class="text-xl font-extrabold">Đã tiếp nhận yêu cầu!</h2>
-        <p class="text-[15px] leading-relaxed">Hệ thống sẽ gửi Thông báo sơ bộ giá &amp; Sơ đồ vị trí qua Zalo <b id="doneP" class="num whitespace-nowrap"></b> trong 15–30 phút.</p>
-        <p class="text-xs text-muted">Mã yêu cầu <b id="doneCode" class="font-mono" style="color: var(--ink)"></b></p>
+    <!-- Bước 4 (tiếp): Hoàn tất -->
+    <section id="step5" class="flex flex-col gap-4" hidden>
+      <div class="card p-6 text-center flex flex-col items-center gap-3">
+        <span class="done-ic"><svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3" aria-hidden="true"><path d="m6 12.5 4 4 8-9"/></svg></span>
+        <h2 id="doneTitle" class="text-[22px] font-extrabold leading-tight">Đã gửi yêu cầu thành công!</h2>
+        <p class="text-[15px] leading-relaxed text-muted">Kết quả Thông báo sơ bộ giá &amp; Sơ đồ vị trí sẽ được gửi qua Zalo <b id="doneP" class="num whitespace-nowrap" style="color: var(--ink)"></b> trong vòng 15 – 30 phút.</p>
+        <div class="w-full flex items-center justify-between gap-2 rounded-xl border border-dashed border-line px-4 py-3" style="background: var(--sunk)">
+          <span class="text-left"><span class="block text-[11px] font-semibold uppercase tracking-[.12em] text-muted">Mã đơn hàng</span><b id="doneCode" class="font-mono text-lg num"></b></span>
+          <button type="button" id="copyCode" class="rounded-full px-4 py-2 text-xs font-bold" style="background: var(--navy); color: #fff">Copy</button>
+        </div>
+        <p id="sendStatus" class="text-sm" aria-live="polite"></p>
       </div>
-      <p id="sendStatus" class="text-sm text-center" aria-live="polite"></p>
-      <a id="zaloAdminBtn" href="https://zalo.me/0986299731" target="_blank" rel="noopener" class="btn w-full text-base !py-4 text-center" style="background:#0068ff;color:#fff">Gửi trực tiếp sang Zalo Quản trị (0986.299.731)</a>
+      <a id="zaloAdminBtn" href="https://zalo.me/0986299731" target="_blank" rel="noopener" class="btn-pri text-center">Gửi nhanh qua Zalo Quản trị (0986.299.731)</a>
+      <button type="button" id="newOrder" class="btn-sec">Tra cứu lô khác</button>
       <p id="copyMsg" class="text-xs text-center" aria-live="polite"></p>
-      <details class="rounded-xl border border-line bg-surface p-3">
+      <details class="card p-3">
         <summary class="text-sm font-semibold cursor-pointer">Xem nội dung đơn (để dán vào Zalo)</summary>
         <textarea id="orderText" rows="10" readonly class="field font-mono text-[12px] mt-2"></textarea>
       </details>
-      <button type="button" id="newOrder" class="btn w-full text-sm border border-line">Gửi yêu cầu khác</button>
     </section>
   </main>
 
   <!-- ================= TAB 2: QUẢN TRỊ ================= -->
-  <main id="tab2" class="gutter max-w-xl mx-auto mt-3 flex flex-col gap-4" hidden>
+  <main id="tab2" class="gutter wrap mx-auto mt-3 flex flex-col gap-4" hidden>
 
     <div id="dataBar" class="text-xs text-muted flex items-center gap-2 flex-wrap">
       <span class="inline-flex items-center gap-1 rounded-full px-2 py-1 border border-line bg-surface"><span id="dataDot" class="w-2 h-2 rounded-full" style="background: var(--warn)"></span><span id="dataLabel">Dữ liệu mẫu · 20 điểm</span></span>
@@ -486,7 +545,7 @@
     </section>
   </main>
 
-  <footer class="gutter max-w-xl mx-auto mt-10 flex items-end justify-between gap-3 text-[11px] text-muted">
+  <footer class="gutter wrap mx-auto mt-10 flex items-end justify-between gap-3 text-[11px] text-muted">
     <p class="leading-relaxed">Kết quả chỉ mang tính tham khảo thị trường, không có giá trị pháp lý để làm căn cứ giao dịch.</p>
     <button type="button" id="adminBtn" class="shrink-0 rounded-lg border border-line px-2.5 py-1.5 font-semibold" aria-label="Mở trang quản trị">Quản trị</button>
   </footer>
@@ -514,7 +573,7 @@
 
 <!-- Cài đặt -->
 <div id="settings" class="fixed inset-0 z-[70] bg-black/60 overflow-y-auto" hidden>
-  <div class="gutter max-w-xl mx-auto" style="padding-top: calc(env(safe-area-inset-top, 0px) + 16px); padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 16px)">
+  <div class="gutter wrap mx-auto" style="padding-top: calc(env(safe-area-inset-top, 0px) + 16px); padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 16px)">
     <div class="bg-surface rounded-2xl border border-line p-4 flex flex-col gap-4">
       <div class="flex items-center justify-between"><h2 class="font-extrabold text-lg">Cài đặt</h2><button type="button" id="closeSettings" class="btn !py-1.5 !px-3 text-sm border border-line">Đóng</button></div>
 
@@ -979,16 +1038,18 @@
   const W = { step: 1, svc: '', lat: NaN, lng: NaN, dt: NaN, ratio: 100, road: 0, shape: '', code: '', phone: '', bill: null, gcn: [] };
   const GCN_MAX = 3;
 
+  // 5 màn hình, 4 vạch tiến trình: 1 Nhu cầu · 2 Vị trí · 3 Thông số · 4 Thanh toán (màn 4) & Hoàn tất (màn 5)
   function goStep(n) {
     W.step = n;
-    [1, 2, 3, 4].forEach(i => { $('step' + i).hidden = i !== n; });
+    [1, 2, 3, 4, 5].forEach(i => { $('step' + i).hidden = i !== n; });
+    const bar = Math.min(n, 4);
     document.querySelectorAll('#stepper .step').forEach(li => {
       const s = +li.dataset.s;
-      if (s === n) li.setAttribute('aria-current', 'step'); else li.removeAttribute('aria-current');
-      li.classList.toggle('done', s < n);
+      li.classList.toggle('on', s <= bar);
+      if (s === bar) li.setAttribute('aria-current', 'step'); else li.removeAttribute('aria-current');
     });
-    window.scrollTo({ top: 0 });
-    if (n === 1 && cmap) setTimeout(() => cmap.map.invalidateSize(), 0);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+    if (n === 2) openCustomerMap();
   }
   function saveDraft() { store.set('tbsb_draft', { svc: W.svc, lat: W.lat, lng: W.lng, loc: $('locInput').value, dt: $('w_dt').value, ratio: $('w_ratio').value, road: W.road, shape: W.shape }); }
 
@@ -996,9 +1057,8 @@
   function chooseSvc(v, scroll) {
     W.svc = v;
     $('svcChosen').textContent = `${SVC[v].name} · ${fmtVnd(SVC[v].amt)}`;
-    $('locBlock').hidden = false;
-    if (scroll) setTimeout(() => $('locBlock').scrollIntoView({ behavior: 'smooth', block: 'start' }), 30);
     saveDraft();
+    if (scroll) setTimeout(() => goStep(2), 160);          // chạm thẻ → hiện trạng thái chọn rồi tự sang bước Vị trí
   }
   function setLoc(lat, lng, src) {
     W.lat = lat; W.lng = lng;
@@ -1036,10 +1096,10 @@
   }
   function toStep2() {
     const m = $('locMsg');
-    if (!W.svc) { $('svcList').scrollIntoView({ behavior: 'smooth' }); return; }
+    if (!W.svc) { goStep(1); return; }
     if (!Number.isFinite(W.lat)) { m.style.color = 'var(--bad)'; m.textContent = 'Chưa có vị trí. Dán link Google Maps, nhập tọa độ hoặc chạm chọn trên bản đồ.'; $('locInput').focus(); return; }
     if (!inRegion(W.lat, W.lng)) { m.style.color = 'var(--bad)'; m.textContent = 'Vị trí nằm ngoài Nghệ An – Hà Tĩnh. Kiểm tra lại link hoặc tọa độ.'; return; }
-    goStep(2);
+    goStep(3);
   }
 
   /* Bước 2 */
@@ -1066,7 +1126,7 @@
     if (!W.code) W.code = makeOrderCode();
     saveDraft();
     renderStep3();
-    goStep(3);
+    goStep(4);
   }
 
   /* Bước 3 */
@@ -1076,13 +1136,14 @@
     $('sumCode').textContent = W.code;
     const row = (k, v) => `<div class="flex justify-between gap-3 py-2 border-b border-line last:border-0"><dt class="text-muted shrink-0">${k}</dt><dd class="font-semibold text-right min-w-0">${v}</dd></div>`;
     $('sumBox').innerHTML = [
-      row('Dịch vụ', `${esc(s.name)}<br><span class="num" style="color: var(--gold)">${fmtVnd(s.amt)}</span>`),
+      row('Dịch vụ', esc(s.name)),
       row('Tọa độ', `<span class="font-mono num text-[13px]">${W.lat.toFixed(6)}, ${W.lng.toFixed(6)}</span>`),
       row('Diện tích', `<span class="num">${fmt(W.dt, 1)} m²</span>`),
       row('Tỷ lệ đất ở', `<span class="num">${fmt(W.ratio, 0)}% · ở ${fmt(so, 1)} m², vườn ${fmt(W.dt - so, 1)} m²</span>`),
       row('Đường', `Loại ${W.road} · ${esc(ROAD_NAME[W.road])}`),
-      row('Hình dáng', `${esc(SHAPE[W.shape].name)} <span class="num text-muted">×${fmt(SHAPE[W.shape].k, 2)}</span>`),
-      row('Giấy chứng nhận', W.gcn.length ? `<span style="color: var(--good)">Đã đính kèm ${W.gcn.length} ảnh</span>` : '<span class="text-muted">Chưa đính kèm</span>')
+      row('Hình dạng', `${esc(SHAPE[W.shape].name)} <span class="num text-muted">×${fmt(SHAPE[W.shape].k, 2)}</span>`),
+      row('Giấy chứng nhận', W.gcn.length ? `<span style="color: var(--good)">Đã đính kèm ${W.gcn.length} ảnh</span>` : '<span class="text-muted">Chưa đính kèm</span>'),
+      row('Tổng thanh toán', `<span class="num text-lg font-extrabold" style="color: var(--navy)">${fmtVnd(s.amt)}</span>`)
     ].join('');
     $('payInfo').textContent = payNote();
     renderQR($('qrSlot'), s.amt, payNote());
@@ -1122,9 +1183,9 @@
     m.textContent = notes.length ? notes.join(' ') : `Đã nén ${W.gcn.length} ảnh · tổng ${Math.round(W.gcn.reduce((a, x) => a + x.blob.size, 0) / 1024)} KB.`;
   }
   function renderGcn() {
-    $('gcnList').innerHTML = W.gcn.map((g, i) => `<li class="relative"><img src="${g.url}" alt="Ảnh Giấy chứng nhận ${i + 1}" class="w-full aspect-[3/4] object-cover rounded-lg border border-line">
-      <button type="button" data-gdel="${i}" class="absolute -top-2 -right-2 w-7 h-7 rounded-full grid place-items-center text-base font-bold text-white shadow" style="background: var(--bad)" aria-label="Xóa ảnh ${i + 1}">×</button>
-      <span class="absolute bottom-1 left-1 text-[10px] font-bold px-1.5 rounded" style="background: rgba(20,33,61,.8); color: #fff">${Math.round(g.blob.size / 1024)} KB</span></li>`).join('');
+    $('gcnList').innerHTML = W.gcn.map((g, i) => `<li class="fcard"><img src="${g.url}" alt="Ảnh Giấy chứng nhận ${i + 1}">
+      <div class="min-w-0 flex-1"><div class="text-sm font-semibold truncate">GCN ${i + 1} · ${esc(g.name)}</div><div class="text-[11px] text-muted num">${g.w}×${g.h}px · ${Math.round(g.blob.size / 1024)} KB · đã nén</div><div class="fbar"><i></i></div></div>
+      <button type="button" data-gdel="${i}" class="fx" aria-label="Xóa ảnh ${i + 1}">×</button></li>`).join('');
     $('gcnList').querySelectorAll('[data-gdel]').forEach(b => b.onclick = () => { dropImg(W.gcn.splice(+b.dataset.gdel, 1)[0]); renderGcn(); $('gcnMsg').textContent = ''; });
     $('gcnConsentWrap').hidden = !W.gcn.length;
     if (!W.gcn.length) $('gcnConsent').checked = false;
@@ -1139,7 +1200,7 @@
       const r = await compressImage(f);
       dropImg(W.bill); W.bill = r;
       $('billPrev').src = r.url;
-      $('billName').textContent = `${f.name || 'bill.jpg'} · ${Math.round(r.blob.size / 1024)} KB`;
+      $('billName').innerHTML = `${esc(f.name || 'bill.jpg')}<div class="text-[11px] text-muted font-normal num">${r.w}×${r.h}px · ${Math.round(r.blob.size / 1024)} KB · đã nén</div>`;
     } catch (er) {
       dropImg(W.bill); W.bill = null; $('billPrevBox').hidden = true;
       $('phoneMsg').style.color = 'var(--bad)'; $('phoneMsg').textContent = er.message + '. Thử chụp lại hoặc chọn ảnh khác.';
@@ -1250,7 +1311,8 @@
     $('orderText').value = text; $('copyMsg').textContent = '';
     const st = $('sendStatus');
     st.style.color = 'var(--muted)'; st.textContent = 'Đang chuyển yêu cầu tới quản trị…';
-    goStep(4);
+    $('doneTitle').textContent = 'Đang gửi yêu cầu…';
+    goStep(5);
     const bill = W.bill, gcn = W.gcn.slice();
     W.code = ''; W.bill = null; W.gcn = []; $('billPrevBox').hidden = true; $('billPrev').removeAttribute('src'); renderGcn();
     const photos = [...(bill ? [{ blob: bill.blob, name: o.code + '-bill.jpg' }] : []), ...gcn.map((g, k) => ({ blob: g.blob, name: `${o.code}-gcn${k + 1}.jpg` }))];
@@ -1262,8 +1324,9 @@
     o.tg = r.skipped ? 'off' : r.ok ? 'ok' : 'fail';
     const l2 = loadOrders(); const i = l2.findIndex(x => x.code === o.code && x.ts === o.ts);
     if (i >= 0) { l2[i].tg = o.tg; if (!saved) { l2[i].imgDropped = true; } saveOrders(l2); }
-    if (r.ok) { st.style.color = 'var(--good)'; st.textContent = 'Đã chuyển yêu cầu tới quản trị. Có thể bấm nút dưới để nhắn thêm qua Zalo.'; }
-    else { st.style.color = 'var(--warn)'; st.textContent = 'Bấm nút bên dưới để gửi yêu cầu qua Zalo cho quản trị (thông tin đơn được copy sẵn, chỉ cần dán và gửi kèm ảnh bill).'; }
+    // Chỉ báo "thành công" khi quản trị thật sự nhận được; nếu chưa, nói rõ còn 1 bước gửi Zalo
+    if (r.ok) { $('doneTitle').textContent = 'Đã gửi yêu cầu thành công!'; st.style.color = 'var(--good)'; st.textContent = 'Quản trị đã nhận yêu cầu. Có thể bấm nút dưới để nhắn thêm qua Zalo.'; }
+    else { $('doneTitle').textContent = 'Còn 1 bước: gửi yêu cầu qua Zalo'; st.style.color = '#B45309'; st.textContent = 'Bấm "Gửi nhanh qua Zalo Quản trị": thông tin đơn đã copy sẵn, chỉ cần dán và gửi kèm ảnh bill.'; }
   }
   function copySync(text, ta) {
     let ok = false;
@@ -1282,7 +1345,7 @@
   function resetWizard() {
     W.svc = ''; W.code = ''; dropImg(W.bill); W.bill = null; W.gcn.forEach(dropImg); W.gcn = []; renderGcn(); $('gcnMsg').textContent = '';
     document.querySelectorAll('input[name="svc"]').forEach(r => { r.checked = false; });
-    $('locBlock').hidden = true; $('billWarn').hidden = true;
+    $('billWarn').hidden = true;
     saveDraft(); goStep(1);
   }
 
@@ -1291,7 +1354,7 @@
   const PRICE_BANDS = [[10, '#16a34a', '< 10 tr'], [25, '#2563eb', '10–25 tr'], [50, '#f97316', '25–50 tr'], [Infinity, '#d92d20', '> 50 tr']];
   const priceColor = v => PRICE_BANDS.find(b => v < b[0])[1];
   const ROAD_SHORT = { 1: 'Loại 1 · Đường lớn/QL/TL', 2: 'Loại 2 · Ô tô tránh nhau', 3: 'Loại 3 · Ô tô vào tận đất', 4: 'Loại 4 · Ngõ xe máy' };
-  const C_TGT = '#ea580c', C_PICK = '#1d4ed8', C_REF = '#9ca3af';
+  const C_TGT = '#D97706', C_PICK = '#1d4ed8', C_REF = '#9ca3af';
   const PIN_SVG = (fill, w = 34, h = 44) => `<svg width="${w}" height="${h}" viewBox="0 0 34 44" aria-hidden="true"><path d="M17 2C9 2 3 8 3 16c0 10 14 26 14 26s14-16 14-26C31 8 25 2 17 2z" fill="${fill}" stroke="#fff" stroke-width="3"/><circle cx="17" cy="16" r="5.5" fill="#fff"/></svg>`;
   const fmtM = m => Math.round(m).toLocaleString('vi-VN') + ' m';
   const tgtIcon = () => L.divIcon({ className: 'tgt-pin', iconSize: [34, 44], iconAnchor: [17, 42], html: PIN_SVG(C_TGT) });
@@ -1356,7 +1419,6 @@
   /* Bản đồ của khách: ghim màu theo loại đường, không hiện đơn giá (tránh lộ kho giá miễn phí) */
   let cmap = null, ctgt = null;
   function openCustomerMap() {
-    $('mapBox').hidden = false;
     if (cmap) { setTimeout(() => cmap.map.invalidateSize(), 0); }
     else {
       if (!window.L) { $('mapMsg').style.color = 'var(--warn)'; $('mapMsg').textContent = 'Không tải được bản đồ. Vẫn có thể dán link Google Maps hoặc nhập tọa độ.'; $('map').parentElement.hidden = true; return; }
@@ -1370,7 +1432,6 @@
       renderCustomerPins();
       setCoordCard(start[0], start[1], Number.isFinite(W.lat) ? 'Vị trí đã nhập' : 'Chạm bản đồ để chọn');
     }
-    setTimeout(() => $('mapBox').scrollIntoView({ behavior: 'smooth', block: 'center' }), 60);
   }
   function renderCustomerPins() {
     if (!cmap) return;
@@ -1963,7 +2024,7 @@
   /* ---------------- Chuyển giao diện khách / quản trị ---------------- */
   function showTab(n) {
     $('tab1').hidden = n !== 1; $('tab2').hidden = n !== 2;
-    $('adminBar').hidden = n !== 2; $('adminBtn').hidden = n !== 1;
+    $('adminBar').hidden = n !== 2; $('adminBtn').hidden = n !== 1; $('stepper').hidden = n !== 1;
     $('hdrSub').textContent = n === 2 ? 'Quản trị' : 'Nghệ An – Hà Tĩnh';
     try { history.replaceState(null, '', n === 2 ? '#quantri' : location.pathname + location.search); } catch (e) { /* trình xem nhúng */ }
     if (n === 2) { initAdminMap(); renderOrders(); refreshTab2(); }
@@ -1981,7 +2042,7 @@
     // Wizard khách
     const zp = normPhone(CONFIG.ADMIN_ZALO);
     $('zaloAdminBtn').href = 'https://zalo.me/' + zp;
-    $('zaloAdminBtn').textContent = `Gửi trực tiếp sang Zalo Quản trị (${zp.length === 10 ? `${zp.slice(0, 4)}.${zp.slice(4, 7)}.${zp.slice(7)}` : zp})`;
+    $('zaloAdminBtn').textContent = `Gửi nhanh qua Zalo Quản trị (${zp.length === 10 ? `${zp.slice(0, 4)}.${zp.slice(4, 7)}.${zp.slice(7)}` : zp})`;
     const d = store.get('tbsb_draft', null);
     if (d) {
       if (d.loc) { $('locInput').value = d.loc; onLocInput(); }
@@ -1993,10 +2054,18 @@
     }
     const ph = store.get('tbsb_phone', ''); if (ph) $('w_phone').value = ph;
     updateRatio();
-    document.querySelectorAll('input[name="svc"]').forEach(r => r.addEventListener('change', () => chooseSvc(r.value, true)));
+    document.querySelectorAll('input[name="svc"]').forEach(r => r.addEventListener('click', () => chooseSvc(r.value, true)));
     $('locInput').addEventListener('input', onLocInput);
     $('locInput').addEventListener('paste', () => setTimeout(onLocInput, 0));
-    $('pickMapBtn').addEventListener('click', openCustomerMap);
+    $('pasteBtn').addEventListener('click', async () => {
+      try { const t = await navigator.clipboard.readText(); if (t) { $('locInput').value = t.trim(); onLocInput(); return; } } catch (e) { /* bị chặn */ }
+      $('locInput').focus(); $('locMsg').style.color = 'var(--muted)'; $('locMsg').textContent = 'Trình duyệt không cho đọc bộ nhớ tạm: nhấn giữ ô nhập và chọn Dán.';
+    });
+    $('copyCode').addEventListener('click', async () => {
+      const c = $('doneCode').textContent;
+      try { await navigator.clipboard.writeText(c); $('copyCode').textContent = 'Đã copy'; } catch (e) { $('copyCode').textContent = 'Nhấn giữ mã'; }
+      setTimeout(() => { $('copyCode').textContent = 'Copy'; }, 1800);
+    });
     $('gpsBtn').addEventListener('click', () => { useGps(); });
     $('ccCopy').addEventListener('click', async () => {
       const t = $('ccLL').textContent;
