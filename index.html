@@ -84,7 +84,12 @@
   .base-sw button { font: 600 12px "Be Vietnam Pro", system-ui, sans-serif; padding: 7px 10px; color: #14213d; background: #fff; border: 0; cursor: pointer; }
   .base-sw button[aria-pressed="true"] { background: #14213d; color: #fff; }
   .base-sw button + button { border-left: 1px solid #d9dfea; }
-  .tgt-pin { filter: drop-shadow(0 2px 3px rgba(0,0,0,.45)); }
+  .tgt-pin, .num-pin { filter: drop-shadow(0 2px 3px rgba(0,0,0,.45)); }
+  .num-pin div { width: 26px; height: 26px; border-radius: 50%; display: grid; place-items: center; font: 800 13px "Be Vietnam Pro", system-ui, sans-serif; color: #fff; background: #1d4ed8; border: 2.5px solid #fff; }
+  .coord-card { position: absolute; top: 8px; left: 8px; right: 8px; z-index: 900; background: rgba(255,255,255,.96); color: #14213d; border-radius: 12px; box-shadow: 0 2px 10px rgba(0,0,0,.25); padding: 8px 10px; display: flex; align-items: center; gap: 10px; }
+  .near-item { cursor: pointer; }
+  .near-item[aria-pressed="false"] { opacity: .78; }
+  #diag { position: fixed; left: -10000px; top: 0; width: 800px; height: 450px; display: flex; background: #fff; color: #14213d; font-family: "Be Vietnam Pro", Arial, sans-serif; }
   .badge { position: absolute; top: -9px; right: 10px; font-size: 10.5px; font-weight: 800; padding: 2px 8px; border-radius: 999px; letter-spacing: .02em; }
 </style>
 </head>
@@ -135,7 +140,17 @@
           Vị trí hiện tại (GPS)</button>
         <a id="openMaps" href="#" target="_blank" rel="noopener" class="text-sm font-semibold" style="color: var(--teal)">Mở trên Google Maps ↗</a>
       </div>
-      <div class="map-wrap rounded-xl overflow-hidden border border-line"><div id="map" role="application" aria-label="Bản đồ chọn vị trí thửa đất và các điểm dữ liệu thị trường"></div></div>
+      <div class="map-wrap rounded-xl overflow-hidden border border-line">
+        <div id="map" role="application" aria-label="Bản đồ chọn vị trí thửa đất và các điểm dữ liệu thị trường"></div>
+        <div class="coord-card" aria-live="polite">
+          <svg width="18" height="22" viewBox="0 0 34 44" aria-hidden="true" class="shrink-0"><path d="M17 2C9 2 3 8 3 16c0 10 14 26 14 26s14-16 14-26C31 8 25 2 17 2z" fill="#ea580c" stroke="#fff" stroke-width="3"/><circle cx="17" cy="16" r="5.5" fill="#fff"/></svg>
+          <div class="min-w-0 flex-1">
+            <div id="ccLL" class="font-mono font-bold text-[13px] num truncate">—</div>
+            <div id="ccMsg" class="text-[11px] truncate" style="color:#5b6680">Chạm bản đồ, kéo ghim hoặc bấm GPS</div>
+          </div>
+          <button type="button" id="ccCopy" class="shrink-0 rounded-lg px-2.5 py-1.5 text-xs font-bold" style="background:#14213d;color:#fff">Copy</button>
+        </div>
+      </div>
       <p id="mapMsg" class="-mt-1 text-xs text-muted" aria-live="polite">Chạm vào bản đồ hoặc kéo ghim tím để chọn vị trí; giá được tính lại ngay.</p>
       <div class="flex items-center justify-between gap-2 flex-wrap">
         <span class="lbl !mb-0">Màu ghim dữ liệu</span>
@@ -145,6 +160,12 @@
         </div>
       </div>
       <div id="legend" class="flex flex-wrap gap-x-4 gap-y-1.5 text-xs"></div>
+      <div class="flex items-center justify-between gap-2 mt-1">
+        <h3 class="font-bold text-sm">Điểm dữ liệu đối chiếu gần nhất</h3>
+        <span class="text-[11px] text-muted">Chạm để bật/tắt</span>
+      </div>
+      <ol id="nearList" class="flex flex-col gap-2 -mt-1"></ol>
+      <p id="nearMsg" class="text-xs -mt-1" aria-live="polite"></p>
     </section>
 
     <section class="bg-surface border border-line rounded-2xl p-4 flex flex-col gap-3">
@@ -275,6 +296,8 @@
           <summary class="text-sm font-semibold cursor-pointer">Thanh toán lượt tra nhanh 49.000đ</summary>
           <div id="qr1Slot" class="mt-3"></div>
         </details>
+        <button type="button" id="diagBtn1" class="btn w-full text-sm" style="background: var(--navy); color: var(--navy-ink)">Xuất ảnh Sơ đồ vị trí (PNG)</button>
+        <p id="diagMsg1" class="text-xs text-muted -mt-1" aria-live="polite"></p>
         <button type="button" id="upsellBtn" class="btn w-full border text-sm" style="border-color: var(--teal); color: var(--teal)">Cần kiểm tra quy hoạch? Gửi yêu cầu Thông báo sơ bộ giá</button>
       </div>
     </section>
@@ -447,7 +470,10 @@
       <div class="ticket-wrap rounded-2xl border border-line" style="background: var(--sunk)">
         <div class="p-3 flex justify-center min-w-[444px]"><div id="ticket" class="shadow-lg"></div></div>
       </div>
-      <button type="button" id="exportBtn" class="btn w-full text-base" style="background: var(--gold); color: #14213d">Tải ảnh Thông báo sơ bộ giá (PNG)</button>
+      <div class="grid grid-cols-2 gap-2">
+        <button type="button" id="exportBtn" class="btn text-sm" style="background: var(--gold); color: #14213d">Xuất Thông báo sơ bộ giá (PNG)</button>
+        <button type="button" id="diagBtn2" class="btn text-sm" style="background: var(--navy); color: var(--navy-ink)">Xuất ảnh Sơ đồ vị trí (PNG)</button>
+      </div>
       <p id="exportMsg" class="text-xs text-muted" aria-live="polite"></p>
     </section>
   </main>
@@ -457,7 +483,7 @@
 <div id="imgModal" class="fixed inset-0 z-[70] bg-black/70 overflow-y-auto" hidden>
   <div class="gutter py-6 max-w-md mx-auto flex flex-col gap-3" style="padding-top: calc(env(safe-area-inset-top, 0px) + 24px); padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 24px)">
     <div class="flex items-center justify-between text-white">
-      <div class="font-bold">Ảnh Thông báo sơ bộ giá</div>
+      <div id="imgTitle" class="font-bold">Ảnh Thông báo sơ bộ giá</div>
       <button type="button" id="closeImg" class="btn !py-1.5 !px-3 text-sm border border-white/40 text-white">Đóng</button>
     </div>
     <p class="text-white/85 text-sm">Nếu nút tải không lưu được (trình xem nhúng chặn tải file), nhấn giữ vào ảnh và chọn <b>Lưu ảnh</b>, rồi gửi Zalo.</p>
@@ -468,6 +494,9 @@
     </div>
   </div>
 </div>
+
+<!-- Khung dựng ảnh Sơ đồ vị trí (ngoài màn hình) -->
+<div id="diag" aria-hidden="true"></div>
 
 <!-- Cài đặt -->
 <div id="settings" class="fixed inset-0 z-[70] bg-black/60 overflow-y-auto" hidden>
@@ -682,7 +711,7 @@
   const districtOf = name => { const p = String(name || '').split(','); return p.length > 1 ? p[p.length - 1].trim() : ''; };
   function estimate(s) {
     const subj = { lat: s.lat, lng: s.lng };
-    const all = DATA.filter(c => Number.isFinite(c.lat) && Number.isFinite(c.lng) && c.price > 0).map(c => {
+    const all = DATA.map((c, id) => Object.assign({ id }, c)).filter(c => Number.isFinite(c.lat) && Number.isFinite(c.lng) && c.price > 0).map(c => {
       const depth = c.mt > 0 ? c.dt / c.mt : NaN;
       const kd = kDepth(depth);
       return Object.assign({}, c, { d: haversine(subj, c), depth, kd, std: c.price / kd, conv: 1 });
@@ -711,7 +740,12 @@
       removed.forEach(c => { c.out = true; });
       comps = comps.filter(c => Math.abs(c.std / med - 1) <= OUTLIER);
     }
-    const meta = { district, zone: z.zone, zoneAuto: z.auto, zoneRef: z.ref, r0, radius, expanded, borrowed, removed, med, sameCount: same.length };
+    // 5 điểm gần nhất sau lọc: mặc định 3 điểm đầu đưa vào công thức (ghim xanh 1-2-3), 2 điểm còn lại là tham khảo (ghim xám)
+    const top5 = comps.slice(0, 5);
+    const pick = s.pick instanceof Set ? s.pick : null;
+    comps = pick ? top5.filter(c => pick.has(c.id)) : top5.slice(0, 3);
+    const refs = top5.filter(c => !comps.includes(c));
+    const meta = { top5, refs, nearArea: nearest ? nearest.area : '', district, zone: z.zone, zoneAuto: z.auto, zoneRef: z.ref, r0, radius, expanded, borrowed, removed, med, sameCount: same.length };
     if (comps.length < 2) return Object.assign({ status: 'NO_DATA', comps }, meta);
 
     const w = comps.map(c => 1 / (c.d * c.d + 100));
@@ -733,7 +767,7 @@
     const total = land + ct;
     const spread = Math.min(0.25, Math.max(0.08, 1.5 * cv) + (borrowed ? 0.05 : 0) + (expanded ? 0.03 : 0) + (ctrlState === 'warn' ? 0.03 : 0));
     let grade = 'B';
-    if (!borrowed && !expanded && comps.length >= 4 && cv <= 0.10 && ctrlState === 'ok') grade = 'A';
+    if (!borrowed && !expanded && comps.length >= 3 && cv <= 0.10 && ctrlState === 'ok') grade = 'A';
     if (comps.length < 3 || cv > 0.20 || ctrlState === 'bad') grade = 'C';
     return Object.assign({ status: 'OK', comps, base, kd, ks, unit, land, ct, total, low: total * (1 - spread), high: total * (1 + spread),
       spread, cv, avgD, grade, ctrl, ctrlState }, meta);
@@ -940,7 +974,7 @@
     m.style.color = inRegion(c.lat, c.lng) ? 'var(--good)' : 'var(--warn)';
     m.textContent = inRegion(c.lat, c.lng) ? `Đã tách tọa độ: ${c.lat.toFixed(6)}, ${c.lng.toFixed(6)}` : 'Tọa độ nằm ngoài Nghệ An – Hà Tĩnh, kết quả sẽ kém tin cậy.';
     updateMapsLink();
-    syncTargetFromInputs(true);
+    syncTargetFromInputs(true, 'Đã cập nhật từ link');
   }
   function updateMapsLink() {
     const lat = num($('lat').value), lng = num($('lng').value);
@@ -986,7 +1020,9 @@
   const gradeText = { A: 'Tin cậy A', B: 'Tin cậy B', C: 'Tin cậy C' };
 
   function runPkg1(f, opt = {}) {
+    f.pick = currentPick(f);
     const r = estimate(f);
+    lastQuick = { f, r };
     const box = $('result1');
     if (!opt.keepOrder) $('order').hidden = true;
     box.hidden = false;
@@ -1083,13 +1119,24 @@
   const PRICE_BANDS = [[10, '#16a34a', '< 10 tr'], [25, '#2563eb', '10–25 tr'], [50, '#f97316', '25–50 tr'], [Infinity, '#d92d20', '> 50 tr']];
   const priceColor = v => PRICE_BANDS.find(b => v < b[0])[1];
   const ROAD_SHORT = { 1: 'Loại 1 · Đường lớn/QL/TL', 2: 'Loại 2 · Ô tô tránh', 3: 'Loại 3 · Ô tô vào', 4: 'Loại 4 · Ngõ xe máy' };
+  const C_TGT = '#ea580c', C_PICK = '#1d4ed8', C_REF = '#9ca3af';
+  const PIN_SVG = (fill, w = 34, h = 44) => `<svg width="${w}" height="${h}" viewBox="0 0 34 44" aria-hidden="true"><path d="M17 2C9 2 3 8 3 16c0 10 14 26 14 26s14-16 14-26C31 8 25 2 17 2z" fill="${fill}" stroke="#fff" stroke-width="3"/><circle cx="17" cy="16" r="5.5" fill="#fff"/></svg>`;
+  const fmtM = m => Math.round(m).toLocaleString('vi-VN') + ' m';
   let map = null, tgt = null, pinLayer = null, linkLayer = null, bases = {}, curBase = 'sat', fallback = false;
+  let lastQuick = null, pickState = { sig: '', ids: null };
   const pinMode = () => radioVal('pinmode') || 'road';
+  const sigOf = f => [num(f.lat).toFixed(6), num(f.lng).toFixed(6), f.road, f.zone].join('|');
+  function currentPick(f) {
+    const sig = sigOf(f);
+    if (pickState.sig !== sig) pickState = { sig, ids: null };   // đổi vị trí / loại đường: về mặc định 3 điểm gần nhất
+    return pickState.ids;
+  }
   function renderLegend() {
     const items = pinMode() === 'road' ? [1, 2, 3, 4].map(k => [ROAD_COLOR[k], ROAD_SHORT[k]]) : PRICE_BANDS.map(b => [b[1], b[2]]);
     $('legend').innerHTML = items.map(([c, t]) => `<span class="inline-flex items-center gap-1.5"><span class="w-3 h-3 rounded-full border-2 border-white shadow" style="background:${c}"></span>${esc(t)}</span>`).join('') +
-      `<span class="inline-flex items-center gap-1.5"><span class="w-3 h-3 rotate-45 rounded-sm" style="background:#7c3aed;outline:2px solid #f5c542"></span>Thửa cần tra cứu</span>` +
-      `<span class="inline-flex items-center gap-1.5"><span class="w-5 border-t-2 border-dashed" style="border-color:#7c3aed"></span>Điểm đưa vào công thức</span>`;
+      `<span class="inline-flex items-center gap-1">${PIN_SVG(C_TGT, 12, 16)}Vị trí tra cứu</span>` +
+      `<span class="inline-flex items-center gap-1.5"><span class="w-4 h-4 rounded-full grid place-items-center text-[9px] font-bold text-white" style="background:${C_PICK}">1</span>Điểm đưa vào công thức</span>` +
+      `<span class="inline-flex items-center gap-1.5"><span class="w-3.5 h-3.5 rounded-full" style="background:${C_REF};outline:2px solid #fff"></span>Điểm tham khảo mở rộng</span>`;
   }
   function renderPins() {
     if (!map) return;
@@ -1099,21 +1146,75 @@
       if (!Number.isFinite(p.lat) || !Number.isFinite(p.lng)) return;
       const col = mode === 'road' ? (ROAD_COLOR[p.road] || '#64748b') : priceColor(p.price);
       L.circleMarker([p.lat, p.lng], { radius: 8, color: '#ffffff', weight: 2, fillColor: col, fillOpacity: 0.95 })
-        .bindPopup(`<b>${esc(p.area)}</b><br>${esc(ROAD_SHORT[p.road] || 'Loại ' + p.road)}<br>Diện tích mẫu: ${fmt(p.dt, 0)} m² · MT ${fmt(p.mt, 1)}m<br>Đơn giá đất tham chiếu: <b style="color:#8a6327">${fmt(p.price, 1)} tr/m²</b>${p.note ? `<br><span style="color:#5b6680">${esc(p.note)}</span>` : ''}`)
-        .addTo(pinLayer);
+        .bindPopup(popupHtml(p)).addTo(pinLayer);
     });
     renderLegend();
   }
+  const popupHtml = p => `<b>${esc(p.area)}</b><br>${esc(ROAD_SHORT[p.road] || 'Loại ' + p.road)}<br>Diện tích mẫu: ${fmt(p.dt, 0)} m² · MT ${fmt(p.mt, 1)}m<br>Đơn giá đất tham chiếu: <b style="color:#8a6327">${fmt(p.price, 1)} tr/m²</b>${p.note ? `<br><span style="color:#5b6680">${esc(p.note)}</span>` : ''}`;
+  const numIcon = (n, col) => L.divIcon({ className: 'num-pin', iconSize: [26, 26], iconAnchor: [13, 13], html: `<div style="background:${col}">${n}</div>` });
   function drawLinks(f, r) {
+    renderNearList(f, r);
     if (!map) return;
     linkLayer.clearLayers();
-    if (!r || !r.comps || !r.comps.length) return;
-    r.comps.slice().sort((a, b) => a.d - b.d).slice(0, 5).forEach(c => {
-      L.polyline([[f.lat, f.lng], [c.lat, c.lng]], { color: '#7c3aed', weight: 2.5, opacity: 0.9, dashArray: '6 6' }).addTo(linkLayer);
-      L.circleMarker([c.lat, c.lng], { radius: 12, color: '#7c3aed', weight: 2.5, fill: false }).addTo(linkLayer);
+    if (!r || !r.top5 || !r.top5.length) return;
+    const picks = (r.comps || []).slice().sort((a, b) => a.d - b.d);
+    (r.refs || []).forEach(c => L.marker([c.lat, c.lng], { icon: numIcon('•', C_REF), zIndexOffset: 400 }).bindPopup(popupHtml(c)).addTo(linkLayer));
+    picks.forEach((c, i) => {
+      L.polyline([[f.lat, f.lng], [c.lat, c.lng]], { color: C_PICK, weight: 2.5, opacity: 0.9, dashArray: '6 6' }).addTo(linkLayer);
+      L.marker([c.lat, c.lng], { icon: numIcon(i + 1, C_PICK), zIndexOffset: 600 }).bindPopup(popupHtml(c)).addTo(linkLayer);
     });
-    const pts = [[f.lat, f.lng], ...r.comps.slice(0, 5).map(c => [c.lat, c.lng])];
-    if (pts.length > 1) map.fitBounds(L.latLngBounds(pts).pad(0.25), { maxZoom: 17, animate: false });
+    const pts = [[f.lat, f.lng], ...picks.map(c => [c.lat, c.lng])];
+    if (pts.length > 1) map.fitBounds(L.latLngBounds(pts).pad(0.25), { maxZoom: 17, animate: false, paddingTopLeft: [0, 60] });
+  }
+  function renderNearList(f, r) {
+    const list = $('nearList');
+    const top = `<li class="rounded-xl border-2 p-3 flex gap-3 items-start" style="border-color:${C_TGT}">
+        <span class="shrink-0">${PIN_SVG(C_TGT, 22, 28)}</span>
+        <div class="min-w-0 flex-1">
+          <div class="flex justify-between gap-2"><span class="font-bold text-sm">Vị trí tra cứu</span><span class="font-mono text-[12px] num">${Number.isFinite(f.lat) ? f.lat.toFixed(5) + ', ' + f.lng.toFixed(5) : '—'}</span></div>
+          <div class="text-xs text-muted mt-0.5">${r && r.nearArea ? 'Gần ' + esc(r.nearArea) : 'Chưa xác định khu vực'}</div>
+          <div class="text-xs mt-0.5">${f.mt > 0 && f.sau > 0 ? `MT ${fmt(f.mt, 1)}m × sâu ${fmt(f.sau, 1)}m = ${fmt(f.dt, 1)} m² · ` : ''}${esc(ROAD_SHORT[f.road] || '')}</div>
+        </div></li>`;
+    if (!r || !r.top5 || !r.top5.length) {
+      list.innerHTML = top + `<li class="text-sm text-muted px-1">Không có điểm dữ liệu đối chiếu trong bán kính ${r ? fmtDist(r.radius) : ''}.</li>`;
+      return;
+    }
+    const picks = r.comps.slice().sort((a, b) => a.d - b.d);
+    const rank = new Map(picks.map((c, i) => [c.id, i + 1]));
+    list.innerHTML = top + r.top5.map(c => {
+      const n = rank.get(c.id), on = !!n, col = on ? C_PICK : C_REF;
+      return `<li class="near-item rounded-xl border p-3 flex gap-3 items-start" role="button" tabindex="0" aria-pressed="${on}" data-id="${c.id}" style="border-color:${on ? C_PICK : 'var(--line)'}">
+        <span class="shrink-0 w-7 h-7 rounded-full grid place-items-center text-xs font-extrabold text-white" style="background:${col}">${on ? n : '–'}</span>
+        <div class="min-w-0 flex-1">
+          <div class="flex justify-between gap-2"><span class="font-semibold text-sm">${esc(c.area)}</span><span class="font-mono text-sm num whitespace-nowrap font-bold">${fmtM(c.d)}</span></div>
+          <div class="text-xs text-muted mt-0.5">${esc(ROAD_SHORT[c.road] || '')}${c.conv !== 1 ? ` · quy đổi ×${fmt(c.conv, 2)}` : ''} · ${esc(c.note || '')}</div>
+          <div class="flex justify-between gap-2 mt-1"><span class="text-[11px]" style="color:${on ? C_PICK : 'var(--muted)'}">${on ? 'Đưa vào công thức' : 'Tham khảo mở rộng'}</span><span class="font-bold num whitespace-nowrap" style="color: var(--gold)">${fmt(c.price, 1)} tr/m²</span></div>
+        </div></li>`;
+    }).join('');
+    list.querySelectorAll('.near-item').forEach(el => {
+      const toggle = () => togglePick(+el.dataset.id);
+      el.addEventListener('click', toggle);
+      el.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggle(); } });
+    });
+    $('nearMsg').style.color = 'var(--muted)';
+    $('nearMsg').textContent = r.status === 'OK' ? `Đang tính trên ${picks.length} điểm, trọng số theo khoảng cách.` : '';
+  }
+  function togglePick(id) {
+    if (!lastQuick) return;
+    const r = lastQuick.r;
+    const ids = new Set(r.comps.map(c => c.id));
+    if (ids.has(id)) {
+      if (ids.size <= 2) { $('nearMsg').style.color = 'var(--warn)'; $('nearMsg').textContent = 'Cần giữ tối thiểu 2 điểm trong công thức.'; return; }
+      ids.delete(id);
+    } else ids.add(id);
+    pickState.ids = ids;
+    const f = readForm();
+    if (validate(f)) { $('nearMsg').textContent = validate(f); return; }
+    runPkg1(f, { silent: true, keepOrder: true });
+  }
+  function setCoordCard(lat, lng, msg) {
+    $('ccLL').textContent = Number.isFinite(lat) ? `${lat.toFixed(6)}, ${lng.toFixed(6)}` : '—';
+    if (msg) $('ccMsg').textContent = msg + ' · ' + new Date().toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
   }
   function setBase(k) {
     curBase = k;
@@ -1130,6 +1231,7 @@
     const m = $('linkMsg');
     m.style.color = inRegion(lat, lng) ? 'var(--good)' : 'var(--warn)';
     m.textContent = (src === 'gps' ? 'Đã lấy vị trí GPS: ' : 'Đã chọn trên bản đồ: ') + lat.toFixed(6) + ', ' + lng.toFixed(6) + (inRegion(lat, lng) ? '' : ' (ngoài Nghệ An – Hà Tĩnh)');
+    setCoordCard(lat, lng, src === 'gps' ? 'Đã cập nhật từ GPS' : 'Đã cập nhật từ bản đồ');
     recalc();
   }
   function recalc() {
@@ -1137,15 +1239,18 @@
     if (validate(f)) return;
     runPkg1(f, { silent: true, keepOrder: true });
   }
-  function syncTargetFromInputs(pan) {
+  function syncTargetFromInputs(pan, msg) {
     const lat = num($('lat').value), lng = num($('lng').value);
-    if (!map || !Number.isFinite(lat) || !Number.isFinite(lng)) return;
+    if (!Number.isFinite(lat) || !Number.isFinite(lng)) return;
+    setCoordCard(lat, lng, msg);
+    if (!map) return;
     tgt.setLatLng([lat, lng]);
     if (pan) map.setView([lat, lng], Math.max(map.getZoom(), 16), { animate: false });
   }
   function initMap() {
     if (!window.L) { $('mapMsg').style.color = 'var(--warn)'; $('mapMsg').textContent = 'Không tải được thư viện bản đồ. Vẫn có thể dán link Google Maps hoặc nhập tọa độ.'; $('map').parentElement.hidden = true; return; }
-    map = L.map('map', { zoomControl: true, tap: true }).setView([18.6795, 105.6813], 13);
+    map = L.map('map', { zoomControl: false, tap: true }).setView([18.6795, 105.6813], 13);
+    L.control.zoom({ position: 'bottomleft' }).addTo(map);
     // Lớp nền Google theo yêu cầu (gọi tile trực tiếp, không qua API chính thức) + lớp dự phòng Esri / OpenStreetMap
     const g = lyr => L.tileLayer(`https://mt1.google.com/vt/lyrs=${lyr}&x={x}&y={y}&z={z}`, { maxZoom: 21, attribution: 'Bản đồ © Google' });
     bases = {
@@ -1161,9 +1266,9 @@
         if (!fallback && ok === 0 && bad >= 4) { fallback = true; setBase(curBase); $('mapMsg').style.color = 'var(--warn)'; $('mapMsg').textContent = 'Không tải được nền Google, đã chuyển sang nền dự phòng (Esri / OpenStreetMap).'; }
       });
     });
-    const Sw = L.Control.extend({ options: { position: 'topright' }, onAdd() {
+    const Sw = L.Control.extend({ options: { position: 'bottomright' }, onAdd() {
       const d = L.DomUtil.create('div', 'base-sw');
-      d.innerHTML = '<button type="button" data-b="sat" aria-pressed="true">Vệ tinh</button><button type="button" data-b="road" aria-pressed="false">Đường phố</button><button type="button" data-fb="1" aria-pressed="false" title="Nền dự phòng Esri / OpenStreetMap">Dự phòng</button>';
+      d.innerHTML = '<button type="button" data-b="sat" aria-pressed="true">Vệ tinh</button><button type="button" data-b="road" aria-pressed="false">Giao thông</button><button type="button" data-fb="1" aria-pressed="false" title="Nền dự phòng Esri / OpenStreetMap">Dự phòng</button>';
       L.DomEvent.disableClickPropagation(d);
       d.querySelectorAll('button[data-b]').forEach(b => b.onclick = () => setBase(b.dataset.b));
       d.querySelector('button[data-fb]').onclick = () => { fallback = !fallback; setBase(curBase); };
@@ -1173,26 +1278,155 @@
     setBase('sat');
     pinLayer = L.layerGroup().addTo(map);
     linkLayer = L.layerGroup().addTo(map);
-    const icon = L.divIcon({ className: 'tgt-pin', iconSize: [34, 44], iconAnchor: [17, 42],
-      html: '<svg width="34" height="44" viewBox="0 0 34 44" aria-hidden="true"><path d="M17 2C9 2 3 8 3 16c0 10 14 26 14 26s14-16 14-26C31 8 25 2 17 2z" fill="#7c3aed" stroke="#f5c542" stroke-width="3"/><circle cx="17" cy="16" r="5.5" fill="#f5c542"/></svg>' });
+    const icon = L.divIcon({ className: 'tgt-pin', iconSize: [34, 44], iconAnchor: [17, 42], html: PIN_SVG(C_TGT) });
     const lat0 = num($('lat').value), lng0 = num($('lng').value);
-    tgt = L.marker(Number.isFinite(lat0) ? [lat0, lng0] : [18.6795, 105.6813], { icon, draggable: true, autoPan: true, zIndexOffset: 1000, title: 'Thửa cần tra cứu' }).addTo(map);
+    tgt = L.marker(Number.isFinite(lat0) ? [lat0, lng0] : [18.6795, 105.6813], { icon, draggable: true, autoPan: true, zIndexOffset: 1000, title: 'Vị trí tra cứu' }).addTo(map);
     tgt.on('dragend', () => { const p = tgt.getLatLng(); setTarget(p.lat, p.lng, 'map'); });
+    tgt.on('drag', () => { const p = tgt.getLatLng(); setCoordCard(p.lat, p.lng, 'Đang kéo ghim'); });
     map.on('click', e => setTarget(e.latlng.lat, e.latlng.lng, 'map'));
     renderPins();
   }
   function useGps() {
     const m = $('linkMsg');
     if (!navigator.geolocation) { m.style.color = 'var(--bad)'; m.textContent = 'Thiết bị không hỗ trợ định vị.'; return; }
-    m.style.color = 'var(--muted)'; m.textContent = 'Đang lấy vị trí GPS…';
+    m.style.color = 'var(--muted)'; m.textContent = 'Đang lấy vị trí GPS…'; $('ccMsg').textContent = 'Đang lấy vị trí GPS…';
     navigator.geolocation.getCurrentPosition(pos => {
       setTarget(pos.coords.latitude, pos.coords.longitude, 'gps');
-      if (map) map.setView([pos.coords.latitude, pos.coords.longitude], 18, { animate: false });
       m.textContent += ` · sai số ±${Math.round(pos.coords.accuracy)} m`;
     }, err => {
       m.style.color = 'var(--bad)';
       m.textContent = err.code === 1 ? 'Chưa cấp quyền vị trí. Bật quyền định vị cho trình duyệt rồi thử lại.' : 'Không lấy được vị trí GPS. Ra chỗ thoáng hoặc chọn trên bản đồ.';
+      $('ccMsg').textContent = 'Không lấy được GPS';
     }, { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 });
+  }
+
+  /* ---------------- Ảnh Sơ đồ vị trí & khoảng cách (Sodovitri.png, 800×450, 2x) ----------------
+     Không chụp DOM Leaflet (html2canvas không dựng đúng transform của tile). Tự dựng nền bằng canvas:
+     tải tile có CORS theo thứ tự nguồn, vẽ ghim + đường nối, rồi ghép cột thông tin bằng html2canvas. */
+  const TILE_SRC = {
+    sat: [['Google vệ tinh', (z, x, y) => `https://mt1.google.com/vt/lyrs=y&x=${x}&y=${y}&z=${z}`], ['Esri World Imagery', (z, x, y) => `https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/${z}/${y}/${x}`]],
+    road: [['Google giao thông', (z, x, y) => `https://mt1.google.com/vt/lyrs=m&x=${x}&y=${y}&z=${z}`], ['OpenStreetMap', (z, x, y) => `https://tile.openstreetmap.org/${z}/${x}/${y}.png`]]
+  };
+  const merc = (lat, lng, z) => { const n = 256 * 2 ** z, sn = Math.sin(rad(Math.max(-85, Math.min(85, lat)))); return { x: (lng + 180) / 360 * n, y: (0.5 - Math.log((1 + sn) / (1 - sn)) / (4 * Math.PI)) * n }; };
+  const loadImg = (url, ms = 7000) => new Promise((res, rej) => {
+    const im = new Image(); im.crossOrigin = 'anonymous';
+    const t = setTimeout(() => { im.src = ''; rej(new Error('timeout')); }, ms);
+    im.onload = () => { clearTimeout(t); res(im); }; im.onerror = () => { clearTimeout(t); rej(new Error('tile')); };
+    im.src = url;
+  });
+  async function renderMapCanvas(target, pts, W, H) {
+    const S = 2, all = [target, ...pts], pad = 56;
+    let z = 18;
+    for (; z > 5; z--) {
+      const ps = all.map(p => merc(p.lat, p.lng, z));
+      const w = Math.max(...ps.map(p => p.x)) - Math.min(...ps.map(p => p.x)), h = Math.max(...ps.map(p => p.y)) - Math.min(...ps.map(p => p.y));
+      if (w <= W - 2 * pad && h <= H - 2 * pad - 20) break;
+    }
+    const Z = z + 1;                                   // vẽ ở mức zoom kế tiếp cho ảnh 2x sắc nét
+    const ps = all.map(p => merc(p.lat, p.lng, Z));
+    const cx = (Math.max(...ps.map(p => p.x)) + Math.min(...ps.map(p => p.x))) / 2, cy = (Math.max(...ps.map(p => p.y)) + Math.min(...ps.map(p => p.y))) / 2;
+    const cw = W * S, ch = H * S, ox = cx - cw / 2, oy = cy - ch / 2 + 10 * S;
+    const cv = document.createElement('canvas'); cv.width = cw; cv.height = ch;
+    const ctx = cv.getContext('2d');
+    ctx.fillStyle = '#e8ecf2'; ctx.fillRect(0, 0, cw, ch);
+    const tiles = [];
+    for (let tx = Math.floor(ox / 256); tx <= Math.floor((ox + cw) / 256); tx++)
+      for (let ty = Math.floor(oy / 256); ty <= Math.floor((oy + ch) / 256); ty++) tiles.push([tx, ty]);
+    let source = '';
+    for (const [name, fn] of TILE_SRC[curBase] || TILE_SRC.sat) {
+      try {
+        const imgs = await Promise.all(tiles.map(([tx, ty]) => loadImg(fn(Z, ((tx % 2 ** Z) + 2 ** Z) % 2 ** Z, ty))));
+        imgs.forEach((im, i) => ctx.drawImage(im, tiles[i][0] * 256 - ox, tiles[i][1] * 256 - oy));
+        ctx.getImageData(0, 0, 1, 1);                // bắt lỗi canvas bị khóa (tile không cho CORS)
+        source = name; break;
+      } catch (e) { ctx.fillStyle = '#e8ecf2'; ctx.fillRect(0, 0, cw, ch); }
+    }
+    if (!source) {                                     // không có nền: lưới tọa độ để vẫn đọc được hướng và khoảng cách
+      ctx.strokeStyle = '#cfd6e2'; ctx.lineWidth = 1;
+      for (let x = 0; x < cw; x += 64) { ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, ch); ctx.stroke(); }
+      for (let y = 0; y < ch; y += 64) { ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(cw, y); ctx.stroke(); }
+    }
+    const P = p => { const q = merc(p.lat, p.lng, Z); return { x: q.x - ox, y: q.y - oy }; };
+    const t0 = P(target);
+    pts.forEach((p, i) => {                          // đường nét đứt + nhãn khoảng cách
+      const q = P(p);
+      ctx.setLineDash([12, 10]); ctx.lineWidth = 5; ctx.strokeStyle = '#ffffff'; ctx.beginPath(); ctx.moveTo(t0.x, t0.y); ctx.lineTo(q.x, q.y); ctx.stroke();
+      ctx.lineWidth = 3; ctx.strokeStyle = C_PICK; ctx.stroke(); ctx.setLineDash([]);
+      if (Math.hypot(q.x - t0.x, q.y - t0.y) < 150) return;   // quá gần ghim cam: khoảng cách đã ghi ở cột phải
+      const mx = (t0.x + q.x) / 2, my = (t0.y + q.y) / 2, lab = fmtM(p.d);
+      ctx.font = '700 22px "Be Vietnam Pro", Arial, sans-serif';
+      const tw = ctx.measureText(lab).width + 18;
+      ctx.fillStyle = 'rgba(255,255,255,.95)'; ctx.beginPath(); ctx.roundRect(mx - tw / 2, my - 17, tw, 34, 10); ctx.fill();
+      ctx.fillStyle = C_PICK; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText(lab, mx, my + 1);
+    });
+    pts.forEach((p, i) => {                          // ghim xanh đánh số
+      const q = P(p);
+      ctx.beginPath(); ctx.arc(q.x, q.y, 22, 0, 2 * Math.PI); ctx.fillStyle = C_PICK; ctx.fill(); ctx.lineWidth = 5; ctx.strokeStyle = '#fff'; ctx.stroke();
+      ctx.fillStyle = '#fff'; ctx.font = '800 24px "Be Vietnam Pro", Arial, sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText(String(i + 1), q.x, q.y + 1);
+    });
+    // ghim cam vị trí tra cứu
+    ctx.save(); ctx.translate(t0.x, t0.y); ctx.scale(2, 2); ctx.translate(-17, -42);
+    ctx.fillStyle = C_TGT; ctx.strokeStyle = '#fff'; ctx.lineWidth = 3;
+    const pin = new Path2D('M17 2C9 2 3 8 3 16c0 10 14 26 14 26s14-16 14-26C31 8 25 2 17 2z'); ctx.fill(pin); ctx.stroke(pin);
+    ctx.beginPath(); ctx.arc(17, 16, 5.5, 0, 2 * Math.PI); ctx.fillStyle = '#fff'; ctx.fill(); ctx.restore();
+    // thước tỷ lệ
+    const mpp = 156543.03392 * Math.cos(rad(target.lat)) / 2 ** Z;   // mét / pixel canvas
+    const nice = [10, 20, 50, 100, 200, 500, 1000, 2000, 5000, 10000].find(v => v / mpp >= 120) || 10000;
+    const bw = nice / mpp;
+    ctx.fillStyle = 'rgba(255,255,255,.9)'; ctx.fillRect(20, ch - 58, bw + 24, 40);
+    ctx.fillStyle = '#14213d'; ctx.fillRect(32, ch - 30, bw, 6);
+    ctx.font = '700 18px "Be Vietnam Pro", Arial, sans-serif'; ctx.textAlign = 'left'; ctx.textBaseline = 'alphabetic'; ctx.fillText(fmtM(nice), 32, ch - 38);
+    const attr = source ? 'Nền: ' + source : 'Không tải được nền bản đồ';
+    ctx.font = '500 18px "Be Vietnam Pro", Arial, sans-serif'; ctx.textAlign = 'right'; ctx.textBaseline = 'middle';
+    const aw = ctx.measureText(attr).width + 20;
+    ctx.fillStyle = 'rgba(255,255,255,.88)'; ctx.fillRect(cw - aw - 12, ch - 42, aw, 30);
+    ctx.fillStyle = '#14213d'; ctx.fillText(attr, cw - 22, ch - 27);
+    return { url: cv.toDataURL('image/png'), source };
+  }
+  async function exportDiagram(target, pts, info, msg) {
+    if (!Number.isFinite(target.lat) || !pts.length) { msg.style.color = 'var(--bad)'; msg.textContent = 'Cần có vị trí tra cứu và ít nhất 1 điểm đối chiếu.'; return; }
+    msg.style.color = 'var(--muted)'; msg.textContent = 'Đang dựng sơ đồ vị trí…';
+    try {
+      if (document.fonts && document.fonts.ready) await document.fonts.ready;
+      const top3 = pts.slice().sort((a, b) => a.d - b.d).slice(0, 3);
+      const m = await renderMapCanvas(target, top3, 520, 450);
+      const row = (icon, title, sub, ll) => `<div style="display:flex;gap:10px;align-items:flex-start;padding:9px 0;border-bottom:1px dashed #d9dfea">
+          <div style="flex:0 0 26px;display:flex;justify-content:center">${icon}</div>
+          <div style="min-width:0"><div style="font-size:13px;font-weight:800">${title}</div>${sub ? `<div style="font-size:10.5px;color:#5b6680;margin-top:1px">${sub}</div>` : ''}
+          <div style="font-family:'JetBrains Mono',Menlo,monospace;font-size:11px;margin-top:2px">${ll}</div></div></div>`;
+      const ll = p => `${p.lat.toFixed(6)}, ${p.lng.toFixed(6)}`;
+      $('diag').innerHTML = `
+        <div style="width:520px;height:450px;position:relative;overflow:hidden">
+          <img src="${m.url}" style="width:520px;height:450px;display:block" alt="">
+          <div style="position:absolute;top:10px;left:10px;background:rgba(20,33,61,.92);color:#fff;border-radius:8px;padding:6px 10px">
+            <div style="font-size:9px;letter-spacing:.14em;color:#d6a75a;font-weight:700">SƠ ĐỒ VỊ TRÍ &amp; KHOẢNG CÁCH</div>
+            <div style="font-size:12px;font-weight:700">${esc(info.code || '')}${info.area ? ' · ' + esc(info.area) : ''}</div>
+          </div>
+        </div>
+        <div style="width:280px;height:450px;padding:16px 16px 12px;box-sizing:border-box;display:flex;flex-direction:column;border-left:4px solid #b0843c">
+          <div style="font-size:16px;font-weight:800;line-height:1.25">Thông tin khoảng cách, tọa độ</div>
+          <div style="font-size:10.5px;color:#5b6680;margin-top:2px">Ngày ${today()} · kèm THÔNG BÁO SƠ BỘ GIÁ</div>
+          <div style="margin-top:6px">
+            ${row(PIN_SVG(C_TGT, 20, 26), 'Vị trí tra cứu', esc(info.area || ''), ll(target))}
+            ${top3.map((p, i) => row(`<svg width="24" height="24" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="11" fill="${C_PICK}"/><text x="12" y="16.5" text-anchor="middle" font-family="Arial, sans-serif" font-size="13" font-weight="700" fill="#fff">${i + 1}</text></svg>`,
+              `${fmtM(p.d)} · ${fmt(p.price, 1)} tr/m²`, esc(`${p.area} · ${ROAD_SHORT[p.road] || ''}`), ll(p))).join('')}
+          </div>
+          <div style="margin-top:auto;font-size:9px;line-height:1.4;color:#5b6680">Khoảng cách đường chim bay (Haversine). Tài liệu tham khảo thị trường, không có giá trị pháp lý.</div>
+        </div>`;
+      const el = $('diag');
+      await Promise.all([...el.querySelectorAll('img')].map(im => im.complete ? 0 : new Promise(r => { im.onload = im.onerror = r; })));
+      const canvas = await html2canvas(el, { scale: 2, backgroundColor: '#ffffff', logging: false, width: 800, height: 450, x: 0, y: 0, scrollX: 0, scrollY: 0,
+        onclone: d => { const c = d.getElementById('diag'); c.style.left = '0px'; } });
+      const url = canvas.toDataURL('image/png');
+      $('imgTitle').textContent = 'Ảnh Sơ đồ vị trí & khoảng cách';
+      $('imgOut').src = url; $('imgModal').hidden = false;
+      lastPng = { url, canvas, name: 'Sodovitri.png', msg };
+      tryDownload();
+      msg.style.color = m.source ? 'var(--good)' : 'var(--warn)';
+      msg.textContent = m.source ? `Đã tạo Sodovitri.png 1600×900 (nền ${m.source}).` : 'Đã tạo Sodovitri.png nhưng không tải được nền bản đồ (trình xem chặn hoặc máy chủ không cho phép), sơ đồ dùng lưới tọa độ.';
+    } catch (e) {
+      msg.style.color = 'var(--bad)'; msg.textContent = 'Không tạo được ảnh: ' + e.message;
+    }
   }
 
   /* ---------------- TAB 2 ---------------- */
@@ -1459,7 +1693,8 @@
       const url = canvas.toDataURL('image/png');
       $('imgOut').src = url;
       $('imgModal').hidden = false;
-      lastPng = { url, canvas, name: (c.code || 'TBSB') + '.png' };
+      $('imgTitle').textContent = 'Ảnh Thông báo sơ bộ giá';
+      lastPng = { url, canvas, name: (c.code || 'TBSB') + '.png', msg };
       tryDownload();
       msg.style.color = 'var(--good)'; msg.textContent = 'Đã tạo ảnh 840px chiều ngang (2x).';
     } catch (e) {
@@ -1477,10 +1712,10 @@
       try {
         const blob = await new Promise(r => lastPng.canvas.toBlob(r, 'image/png'));
         await dl.save({ filename: lastPng.name, data: blob });
-        $('exportMsg').style.color = 'var(--good)'; $('exportMsg').textContent = 'Đã lưu ' + lastPng.name + '.';
+        (lastPng.msg || $('exportMsg')).style.color = 'var(--good)'; (lastPng.msg || $('exportMsg')).textContent = 'Đã lưu ' + lastPng.name + '.';
       } catch (e) {
         if (e && e.code === 'declined') return;
-        $('exportMsg').style.color = 'var(--warn)'; $('exportMsg').textContent = 'Không lưu được file ở đây. Nhấn giữ vào ảnh để lưu.';
+        (lastPng.msg || $('exportMsg')).style.color = 'var(--warn)'; (lastPng.msg || $('exportMsg')).textContent = 'Không lưu được file ở đây. Nhấn giữ vào ảnh để lưu.';
       }
       return;
     }
@@ -1491,12 +1726,12 @@
     try {
       const blob = await new Promise(r => lastPng.canvas.toBlob(r, 'image/png'));
       const file = new File([blob], lastPng.name, { type: 'image/png' });
-      if (navigator.canShare && navigator.canShare({ files: [file] })) { await navigator.share({ files: [file], title: 'Thông báo sơ bộ giá' }); return; }
+      if (navigator.canShare && navigator.canShare({ files: [file] })) { await navigator.share({ files: [file], title: lastPng.name }); return; }
       throw new Error('unsupported');
     } catch (e) {
       if (e && e.name === 'AbortError') return;
-      $('exportMsg').style.color = 'var(--warn)';
-      $('exportMsg').textContent = 'Thiết bị hoặc trình xem này không hỗ trợ chia sẻ file. Nhấn giữ vào ảnh để lưu rồi gửi Zalo.';
+      (lastPng.msg || $('exportMsg')).style.color = 'var(--warn)';
+      (lastPng.msg || $('exportMsg')).textContent = 'Thiết bị hoặc trình xem này không hỗ trợ chia sẻ file. Nhấn giữ vào ảnh để lưu rồi gửi Zalo.';
     }
   }
 
@@ -1541,7 +1776,22 @@
     initMap();
     $('gpsBtn').addEventListener('click', useGps);
     document.querySelectorAll('input[name="pinmode"]').forEach(r => r.addEventListener('change', renderPins));
-    ['lat', 'lng'].forEach(id => $(id).addEventListener('change', () => { syncTargetFromInputs(true); recalc(); }));
+    ['lat', 'lng'].forEach(id => $(id).addEventListener('change', () => { syncTargetFromInputs(true, 'Đã cập nhật từ ô nhập'); recalc(); }));
+    syncTargetFromInputs(false, 'Vị trí ban đầu');
+    $('ccCopy').addEventListener('click', async () => {
+      const t = $('ccLL').textContent;
+      try { await navigator.clipboard.writeText(t); $('ccMsg').textContent = 'Đã copy tọa độ'; }
+      catch (e) { $('ccMsg').textContent = 'Trình duyệt chặn copy, nhấn giữ để chọn'; }
+    });
+    $('diagBtn1').addEventListener('click', () => {
+      if (!lastQuick || !lastQuick.r.comps) { $('diagMsg1').textContent = 'Tra giá trước khi xuất sơ đồ.'; return; }
+      const { f, r } = lastQuick;
+      exportDiagram({ lat: f.lat, lng: f.lng }, r.comps, { code: $('orderCode').textContent || 'Tra nhanh', area: r.nearArea ? 'Gần ' + r.nearArea : '' }, $('diagMsg1'));
+    });
+    $('diagBtn2').addEventListener('click', () => {
+      const c = readCase();
+      exportDiagram({ lat: c.lat, lng: c.lng }, lastEst ? lastEst.comps : [], { code: c.code, area: $('c_area').value }, $('exportMsg'));
+    });
     const ph = store.get('tbsb_phone', ''); if (ph) $('phone').value = ph;
     $('mapLink').addEventListener('input', onLink);
     $('mapLink').addEventListener('paste', () => setTimeout(onLink, 0));
