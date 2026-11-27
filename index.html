@@ -1,0 +1,1628 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Thông Báo Sơ Bộ Giá</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<meta name="theme-color" content="#14213d">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap">
+<script src="https://cdn.tailwindcss.com/3.4.17"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<!--LEAFLET_CSS--><link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"><!--/LEAFLET_CSS-->
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+  tailwind.config = {
+    theme: {
+      extend: {
+        colors: {
+          bg: 'var(--bg)', surface: 'var(--surface)', sunk: 'var(--sunk)', ink: 'var(--ink)', muted: 'var(--muted)',
+          line: 'var(--line)', navy: 'var(--navy)', navyink: 'var(--navy-ink)', gold: 'var(--gold)', teal: 'var(--teal)',
+          good: 'var(--good)', warn: 'var(--warn)', bad: 'var(--bad)'
+        },
+        fontFamily: {
+          sans: ['"Be Vietnam Pro"', 'system-ui', '-apple-system', 'Segoe UI', 'Roboto', 'sans-serif'],
+          mono: ['"JetBrains Mono"', 'ui-monospace', 'SFMono-Regular', 'Menlo', 'monospace']
+        }
+      }
+    }
+  };
+</script>
+<style>
+  /* Layout: một cột mobile-first, header navy dính trên cùng, thẻ trắng xếp dọc; mẫu thông báo cố định tông navy – đồng */
+  :root {
+    --bg: #eef1f6; --surface: #ffffff; --sunk: #f5f7fb; --ink: #14213d; --muted: #5b6680; --line: #d9dfea;
+    --navy: #14213d; --navy-ink: #ffffff; --gold: #b0843c; --teal: #0f7c7a;
+    --good: #12805c; --warn: #b26b00; --bad: #c0392b;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #0b1222; --surface: #121b30; --sunk: #0f1729; --ink: #e8edf7; --muted: #98a3bb; --line: #26324d;
+      --navy: #0a1020; --navy-ink: #f2f5fb; --gold: #d6a75a; --teal: #36b3ae;
+      --good: #3cc08f; --warn: #e3a23a; --bad: #ef6b5d; color-scheme: dark;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #0b1222; --surface: #121b30; --sunk: #0f1729; --ink: #e8edf7; --muted: #98a3bb; --line: #26324d;
+    --navy: #0a1020; --navy-ink: #f2f5fb; --gold: #d6a75a; --teal: #36b3ae;
+    --good: #3cc08f; --warn: #e3a23a; --bad: #ef6b5d; color-scheme: dark;
+  }
+  [hidden] { display: none !important; }
+  html, body { background: var(--bg); color: var(--ink); }
+  body { font-family: "Be Vietnam Pro", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; -webkit-tap-highlight-color: transparent; }
+  body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top, 0px); z-index: 60; background: var(--navy); }
+  .gutter { padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+  .num { font-variant-numeric: tabular-nums; }
+  .field { width: 100%; background: var(--sunk); border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px; font-size: 16px; color: var(--ink); outline: none; }
+  .field:focus { border-color: var(--teal); box-shadow: 0 0 0 3px color-mix(in srgb, var(--teal) 22%, transparent); }
+  .lbl { display: block; font-size: 12px; font-weight: 600; letter-spacing: .04em; text-transform: uppercase; color: var(--muted); margin-bottom: 6px; }
+  .seg input { position: absolute; opacity: 0; pointer-events: none; }
+  .seg label { cursor: pointer; }
+  .seg input:checked + span { background: var(--navy); color: var(--navy-ink); border-color: var(--navy); }
+  .seg input:focus-visible + span { outline: 2px solid var(--teal); outline-offset: 2px; }
+  .pkg input:checked + div { border-color: var(--gold); box-shadow: 0 0 0 2px var(--gold) inset; }
+  .btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; border-radius: 12px; font-weight: 700; padding: 12px 16px; transition: transform .08s ease; }
+  .btn:active { transform: scale(.98); }
+  .btn:focus-visible, button:focus-visible, a:focus-visible { outline: 2px solid var(--teal); outline-offset: 2px; }
+  .tabbtn[aria-selected="true"] { background: var(--gold); color: #14213d; }
+  .tabbtn[aria-selected="false"] { color: var(--navy-ink); opacity: .8; }
+  #qrBox img, #qrBox canvas { width: 220px; height: 220px; }
+  @media (prefers-reduced-motion: reduce) { * { transition: none !important; animation: none !important; } }
+  /* Thông báo: palette cố định để ảnh xuất giống nhau trên mọi máy */
+  #ticket { width: 420px; background: #ffffff; color: #14213d; font-family: "Be Vietnam Pro", Arial, sans-serif; }
+  #ticket .tk-num { font-family: "JetBrains Mono", Menlo, monospace; }
+  .ticket-wrap { overflow-x: auto; }
+  /* Bản đồ: cô lập stacking context để control của Leaflet (z-index 1000) không đè header, hộp thoại */
+  .map-wrap { position: relative; isolation: isolate; z-index: 0; }
+  #map { height: 360px; background: #dfe5ee; }
+  .leaflet-container { font-family: "Be Vietnam Pro", system-ui, sans-serif; }
+  .leaflet-popup-content { margin: 10px 12px; font-size: 12.5px; line-height: 1.45; color: #14213d; }
+  .base-sw { display: flex; background: #fff; border-radius: 10px; box-shadow: 0 1px 4px rgba(0,0,0,.35); overflow: hidden; }
+  .base-sw button { font: 600 12px "Be Vietnam Pro", system-ui, sans-serif; padding: 7px 10px; color: #14213d; background: #fff; border: 0; cursor: pointer; }
+  .base-sw button[aria-pressed="true"] { background: #14213d; color: #fff; }
+  .base-sw button + button { border-left: 1px solid #d9dfea; }
+  .tgt-pin { filter: drop-shadow(0 2px 3px rgba(0,0,0,.45)); }
+  .badge { position: absolute; top: -9px; right: 10px; font-size: 10.5px; font-weight: 800; padding: 2px 8px; border-radius: 999px; letter-spacing: .02em; }
+</style>
+</head>
+<body>
+
+<div class="min-h-screen pb-28">
+  <header class="sticky z-50 bg-navy text-navyink shadow-md" style="top: env(safe-area-inset-top, 0px)">
+    <div class="gutter py-3 max-w-xl mx-auto">
+      <div class="flex items-center justify-between gap-3">
+        <div class="min-w-0">
+          <div class="text-[11px] font-semibold tracking-[.18em] uppercase" style="color: var(--gold)">Nghệ An – Hà Tĩnh</div>
+          <h1 class="text-base font-extrabold leading-tight" style="text-wrap: balance">Hệ thống Tra cứu &amp; Thông báo Sơ bộ Giá BĐS</h1>
+        </div>
+        <button id="openSettings" type="button" class="btn !py-2 !px-3 text-sm border border-white/25 text-navyink" aria-label="Cài đặt dữ liệu và tài khoản nhận tiền">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg>
+          Cài đặt
+        </button>
+      </div>
+      <div class="mt-3 grid grid-cols-2 gap-1 p-1 rounded-xl bg-white/10" role="tablist">
+        <button type="button" role="tab" id="tabBtn1" aria-selected="true" aria-controls="tab1" class="tabbtn rounded-lg py-2 px-1 text-[13px] leading-tight font-bold">Tra cứu &amp; Gửi yêu cầu</button>
+        <button type="button" role="tab" id="tabBtn2" aria-selected="false" aria-controls="tab2" class="tabbtn rounded-lg py-2 px-1 text-[13px] leading-tight font-bold">Quản trị hệ thống</button>
+      </div>
+    </div>
+  </header>
+
+  <div id="dataBar" class="gutter max-w-xl mx-auto mt-3 text-xs text-muted flex items-center gap-2 flex-wrap">
+    <span class="inline-flex items-center gap-1 rounded-full px-2 py-1 border border-line bg-surface"><span id="dataDot" class="w-2 h-2 rounded-full" style="background: var(--warn)"></span><span id="dataLabel">Dữ liệu mẫu · 20 điểm</span></span>
+    <span id="dataHint">Số liệu minh họa từ khảo sát thị trường mẫu, chưa phải giá thật.</span>
+  </div>
+
+  <!-- ================= TAB 1: TRA CỨU ================= -->
+  <main id="tab1" role="tabpanel" aria-labelledby="tabBtn1" class="gutter max-w-xl mx-auto mt-3 flex flex-col gap-4">
+
+    <section class="bg-surface border border-line rounded-2xl p-4 flex flex-col gap-3">
+      <h2 class="font-bold text-base">1. Vị trí thửa đất</h2>
+      <div>
+        <label class="lbl" for="mapLink">Link Google Maps hoặc tọa độ</label>
+        <textarea id="mapLink" rows="2" class="field font-mono text-[14px]" placeholder="Dán link chia sẻ, hoặc gõ 18.6702, 105.6985"></textarea>
+        <p id="linkMsg" class="mt-1 text-xs text-muted" aria-live="polite"></p>
+      </div>
+      <div class="grid grid-cols-2 gap-3">
+        <div><label class="lbl" for="lat">Vĩ độ (Lat)</label><input id="lat" class="field num font-mono" inputmode="decimal" autocomplete="off"></div>
+        <div><label class="lbl" for="lng">Kinh độ (Lng)</label><input id="lng" class="field num font-mono" inputmode="decimal" autocomplete="off"></div>
+      </div>
+      <div class="flex items-center justify-between gap-2 flex-wrap">
+        <button type="button" id="gpsBtn" class="btn !py-2 !px-3 text-sm" style="background: var(--teal); color: #fff">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/></svg>
+          Vị trí hiện tại (GPS)</button>
+        <a id="openMaps" href="#" target="_blank" rel="noopener" class="text-sm font-semibold" style="color: var(--teal)">Mở trên Google Maps ↗</a>
+      </div>
+      <div class="map-wrap rounded-xl overflow-hidden border border-line"><div id="map" role="application" aria-label="Bản đồ chọn vị trí thửa đất và các điểm dữ liệu thị trường"></div></div>
+      <p id="mapMsg" class="-mt-1 text-xs text-muted" aria-live="polite">Chạm vào bản đồ hoặc kéo ghim tím để chọn vị trí; giá được tính lại ngay.</p>
+      <div class="flex items-center justify-between gap-2 flex-wrap">
+        <span class="lbl !mb-0">Màu ghim dữ liệu</span>
+        <div class="seg grid grid-cols-2 gap-1" id="colorSeg">
+          <label><input type="radio" name="pinmode" value="road" checked><span class="block text-center rounded-lg border border-line py-1.5 px-3 text-xs font-semibold">Theo loại đường</span></label>
+          <label><input type="radio" name="pinmode" value="price"><span class="block text-center rounded-lg border border-line py-1.5 px-3 text-xs font-semibold">Theo khung giá</span></label>
+        </div>
+      </div>
+      <div id="legend" class="flex flex-wrap gap-x-4 gap-y-1.5 text-xs"></div>
+    </section>
+
+    <section class="bg-surface border border-line rounded-2xl p-4 flex flex-col gap-3">
+      <h2 class="font-bold text-base">2. Thông số bất động sản</h2>
+      <div class="grid grid-cols-3 gap-3">
+        <div><label class="lbl" for="mt">Mặt tiền (m)</label><input id="mt" class="field num" inputmode="decimal" autocomplete="off"></div>
+        <div><label class="lbl" for="sau">Chiều sâu (m)</label><input id="sau" class="field num" inputmode="decimal" autocomplete="off"></div>
+        <div><label class="lbl" for="dt">Diện tích</label><input id="dt" class="field num" readonly tabindex="-1" aria-readonly="true"></div>
+      </div>
+      <p id="depthWarn" class="text-xs rounded-lg px-3 py-2" style="background: color-mix(in srgb, var(--warn) 14%, transparent); color: var(--warn)" hidden></p>
+
+      <div>
+        <span class="lbl">Hình dáng thửa</span>
+        <div class="seg grid grid-cols-2 gap-2" id="shapeSeg">
+          <label><input type="radio" name="shape" value="VU" checked><span class="block text-center text-sm font-semibold rounded-xl border border-line py-2 px-2">Vuông vắn <span class="opacity-70">×1,00</span></span></label>
+          <label><input type="radio" name="shape" value="NO"><span class="block text-center text-sm font-semibold rounded-xl border border-line py-2 px-2">Nở hậu <span class="opacity-70" data-k="NO">×1,03</span></span></label>
+          <label><input type="radio" name="shape" value="TH"><span class="block text-center text-sm font-semibold rounded-xl border border-line py-2 px-2">Thóp hậu <span class="opacity-70" data-k="TH">×0,92</span></span></label>
+          <label><input type="radio" name="shape" value="LD"><span class="block text-center text-sm font-semibold rounded-xl border border-line py-2 px-2">Chữ L / Bị đâm đường <span class="opacity-70" data-k="LD">×0,88</span></span></label>
+        </div>
+      </div>
+
+      <div>
+        <span class="lbl">Phân loại đường</span>
+        <div class="seg grid grid-cols-4 gap-2" id="roadSeg">
+          <label><input type="radio" name="road" value="1"><span class="block text-center rounded-xl border border-line py-2"><b class="text-base">1</b><span class="block text-[11px] leading-tight opacity-80">Đường lớn QL/TL</span></span></label>
+          <label><input type="radio" name="road" value="2" checked><span class="block text-center rounded-xl border border-line py-2"><b class="text-base">2</b><span class="block text-[11px] leading-tight opacity-80">Ô tô tránh</span></span></label>
+          <label><input type="radio" name="road" value="3"><span class="block text-center rounded-xl border border-line py-2"><b class="text-base">3</b><span class="block text-[11px] leading-tight opacity-80">Ô tô vào</span></span></label>
+          <label><input type="radio" name="road" value="4"><span class="block text-center rounded-xl border border-line py-2"><b class="text-base">4</b><span class="block text-[11px] leading-tight opacity-80">Ngõ xe máy</span></span></label>
+        </div>
+      </div>
+
+      <div>
+        <span class="lbl">Khu vực lọc dữ liệu</span>
+        <div class="seg grid grid-cols-3 gap-2" id="zoneSeg">
+          <label><input type="radio" name="zone" value="auto" checked><span class="block text-center rounded-xl border border-line py-2 px-1 text-sm font-semibold">Tự động</span></label>
+          <label><input type="radio" name="zone" value="urban"><span class="block text-center rounded-xl border border-line py-2 px-1 text-sm font-semibold">Đô thị <span class="opacity-70" data-r="urban">2 km</span></span></label>
+          <label><input type="radio" name="zone" value="rural"><span class="block text-center rounded-xl border border-line py-2 px-1 text-sm font-semibold">Nông thôn <span class="opacity-70" data-r="rural">5 km</span></span></label>
+        </div>
+        <p class="mt-1 text-xs text-muted">Tự động: phường, thị trấn tính là đô thị; xã tính là nông thôn (theo điểm dữ liệu gần nhất).</p>
+      </div>
+
+      <div class="grid grid-cols-1 gap-3">
+        <div><label class="lbl" for="ctType">Hiện trạng nhà trên đất</label>
+          <select id="ctType" class="field">
+            <option value="none">Đất trống</option>
+            <option value="c4">Nhà cấp 4</option>
+            <option value="t23">Nhà 2–3 tầng</option>
+            <option value="t4">Nhà 4+ tầng</option>
+          </select>
+        </div>
+        <div id="ctFields" class="grid grid-cols-2 gap-3">
+          <div><label class="lbl" for="ctArea">DT sàn (m²)</label><input id="ctArea" class="field num" inputmode="decimal" autocomplete="off"></div>
+          <div><label class="lbl" for="ctPct">Chất lượng còn lại (%)</label><input id="ctPct" class="field num" inputmode="decimal" autocomplete="off"></div>
+          <p id="ctHint" class="col-span-2 text-xs text-muted"></p>
+        </div>
+      </div>
+    </section>
+
+    <section class="bg-surface border border-line rounded-2xl p-4 flex flex-col gap-3">
+      <h2 class="font-bold text-base">3. Chọn gói dịch vụ</h2>
+      <div class="text-[11px] font-bold uppercase tracking-[.14em]" style="color: var(--gold)">Nhóm A · Hội viên tra cứu tự động không giới hạn</div>
+      <div class="flex flex-col gap-3" id="pkgMember">
+        <label class="pkg cursor-pointer"><input type="radio" name="pkg" value="m1" class="sr-only">
+          <div class="rounded-xl border border-line p-3 flex items-start justify-between gap-3">
+            <div class="min-w-0"><div class="font-bold">Gói 1 Tháng</div><div class="text-xs text-muted mt-0.5">Tra cứu tự động không giới hạn 30 ngày. Giảm 15% phí Thông báo sơ bộ &amp; Quy hoạch từ xa.</div></div>
+            <div class="font-mono font-bold num whitespace-nowrap" style="color: var(--gold)">299.000đ</div>
+          </div></label>
+        <label class="pkg cursor-pointer relative"><input type="radio" name="pkg" value="m3" class="sr-only">
+          <span class="badge" style="background: var(--gold); color: #14213d">Phổ biến nhất</span>
+          <div class="rounded-xl border border-line p-3 flex items-start justify-between gap-3">
+            <div class="min-w-0"><div class="font-bold">Gói 3 Tháng</div><div class="text-xs text-muted mt-0.5">Tra cứu tự động không giới hạn 90 ngày. Tặng 01 lượt Thông báo sơ bộ &amp; Quy hoạch từ xa.</div></div>
+            <div class="font-mono font-bold num whitespace-nowrap" style="color: var(--gold)">790.000đ</div>
+          </div></label>
+        <label class="pkg cursor-pointer relative"><input type="radio" name="pkg" value="m6" class="sr-only">
+          <span class="badge" style="background: var(--teal); color: #fff">Tiết kiệm 400k</span>
+          <div class="rounded-xl border border-line p-3 flex items-start justify-between gap-3">
+            <div class="min-w-0"><div class="font-bold">Gói 6 Tháng</div><div class="text-xs text-muted mt-0.5">Tra cứu tự động không giới hạn 180 ngày. Tặng 03 lượt Thông báo sơ bộ &amp; Quy hoạch từ xa. Ưu tiên xử lý nhanh.</div></div>
+            <div class="font-mono font-bold num whitespace-nowrap" style="color: var(--gold)">1.390.000đ</div>
+          </div></label>
+      </div>
+      <div id="phoneWrap" hidden>
+        <label class="lbl" for="phone">Số điện thoại đăng ký hội viên</label>
+        <input id="phone" class="field font-mono num" inputmode="tel" autocomplete="tel" placeholder="09xx xxx xxx">
+        <p class="mt-1 text-xs text-muted">Số điện thoại nằm trong nội dung chuyển khoản để đối soát và kích hoạt hội viên.</p>
+      </div>
+
+      <div class="text-[11px] font-bold uppercase tracking-[.14em] mt-1" style="color: var(--teal)">Nhóm B · Gói lẻ theo từng lượt</div>
+      <div class="flex flex-col gap-2" id="pkgList">
+        <label class="pkg cursor-pointer"><input type="radio" name="pkg" value="1" class="sr-only" checked>
+          <div class="rounded-xl border border-line p-3 flex items-start justify-between gap-3">
+            <div class="min-w-0"><div class="font-bold">Tra nhanh tự động</div><div class="text-xs text-muted mt-0.5">Khung giá trị tham chiếu và đối chiếu trên bản đồ ngay lập tức. Không gồm quy hoạch.</div></div>
+            <div class="font-mono font-bold num whitespace-nowrap text-right" style="color: var(--gold)">49.000đ<span class="block text-[10px] font-sans text-muted">/lượt</span></div>
+          </div></label>
+        <label class="pkg cursor-pointer"><input type="radio" name="pkg" value="2" class="sr-only">
+          <div class="rounded-xl border border-line p-3 flex items-start justify-between gap-3">
+            <div class="min-w-0"><div class="font-bold">Thông báo sơ bộ giá + Kiểm tra quy hoạch từ xa</div><div class="text-xs text-muted mt-0.5">Người xử lý chốt số liệu, gửi ảnh Thông báo sơ bộ giá qua Zalo. Hội viên 1 tháng: 255.000đ.</div></div>
+            <div class="font-mono font-bold num whitespace-nowrap text-right" style="color: var(--gold)">300.000đ<span class="block text-[10px] font-sans text-muted">/lượt</span></div>
+          </div></label>
+        <label class="pkg cursor-pointer"><input type="radio" name="pkg" value="3" class="sr-only">
+          <div class="rounded-xl border border-line p-3 flex items-start justify-between gap-3">
+            <div class="min-w-0"><div class="font-bold">Khảo sát thực địa + Thông báo sơ bộ giá</div><div class="text-xs text-muted mt-0.5">Bất động sản giá trị lớn, hình thể phức tạp, giáp ranh nhạy cảm.</div></div>
+            <div class="font-mono font-bold num whitespace-nowrap text-right" style="color: var(--gold)">500.000đ<span class="block text-[10px] font-sans text-muted">/lượt</span></div>
+          </div></label>
+      </div>
+      <button id="runBtn" type="button" class="btn w-full text-base" style="background: var(--navy); color: var(--navy-ink)">Tra giá ngay</button>
+      <p id="formMsg" class="text-sm" style="color: var(--bad)" aria-live="polite"></p>
+    </section>
+
+    <!-- Kết quả tra nhanh -->
+    <section id="result1" class="rounded-2xl overflow-hidden border border-line bg-surface" hidden>
+      <div class="bg-navy text-navyink p-4">
+        <div class="flex items-center justify-between gap-2">
+          <div class="text-[11px] uppercase tracking-[.16em] font-semibold" style="color: var(--gold)">Khung giá trị tham chiếu thị trường</div>
+          <span id="r1Grade" class="text-xs font-bold rounded-full px-2 py-0.5"></span>
+        </div>
+        <div id="r1Range" class="mt-1 text-2xl font-extrabold num leading-tight"></div>
+        <div id="r1Mid" class="text-sm opacity-80 num mt-1"></div>
+      </div>
+      <div class="p-4 flex flex-col gap-3">
+        <div class="rounded-xl p-3 border" style="border-color: var(--gold); background: color-mix(in srgb, var(--gold) 10%, transparent)">
+          <div class="text-xs font-semibold uppercase tracking-wider text-muted">Mức tham chiếu vốn dự kiến (70% – 80%)</div>
+          <div id="r1Cap" class="text-xl font-extrabold num mt-0.5"></div>
+          <div class="text-xs text-muted mt-0.5">Tính trên mức thấp của khung giá trị tham chiếu.</div>
+        </div>
+        <dl id="r1Table" class="grid grid-cols-[1fr_auto] gap-x-3 gap-y-1.5 text-sm"></dl>
+        <p id="r1Note" class="text-xs text-muted"></p>
+        <details class="rounded-xl border border-line p-3">
+          <summary class="text-sm font-semibold cursor-pointer">Thanh toán lượt tra nhanh 49.000đ</summary>
+          <div id="qr1Slot" class="mt-3"></div>
+        </details>
+        <button type="button" id="upsellBtn" class="btn w-full border text-sm" style="border-color: var(--teal); color: var(--teal)">Cần kiểm tra quy hoạch? Gửi yêu cầu Thông báo sơ bộ giá</button>
+      </div>
+    </section>
+
+    <!-- Yêu cầu thông báo sơ bộ / khảo sát -->
+    <section id="order" class="rounded-2xl border border-line bg-surface p-4 flex flex-col gap-3" hidden>
+      <div class="flex items-center justify-between gap-2">
+        <div>
+          <div id="orderLbl" class="text-[11px] uppercase tracking-[.16em] font-semibold text-muted">Mã tra cứu</div>
+          <div id="orderCode" class="text-2xl font-extrabold font-mono num"></div>
+        </div>
+        <div class="text-right">
+          <div id="orderPkg" class="text-sm font-bold"></div>
+          <div id="orderAmt" class="font-mono font-bold num" style="color: var(--gold)"></div>
+        </div>
+      </div>
+      <div id="qrSlot"></div>
+      <button type="button" id="copyZalo" class="btn w-full text-base" style="background: var(--teal); color: #fff">Copy thông tin gửi Zalo</button>
+      <textarea id="zaloText" rows="7" class="field font-mono text-[12px]" readonly aria-label="Nội dung gửi Zalo"></textarea>
+      <p id="copyMsg" class="text-xs text-muted" aria-live="polite"></p>
+    </section>
+  </main>
+
+  <!-- ================= TAB 2: QUẢN TRỊ ================= -->
+  <main id="tab2" role="tabpanel" aria-labelledby="tabBtn2" class="gutter max-w-xl mx-auto mt-3 flex flex-col gap-4" hidden>
+
+    <section class="bg-surface border border-line rounded-2xl p-4 flex flex-col gap-3">
+      <h2 class="font-bold text-base">1. Nhận yêu cầu</h2>
+      <div>
+        <label class="lbl" for="caseText">Dán tin nhắn Zalo đã nhận</label>
+        <textarea id="caseText" rows="4" class="field font-mono text-[12px]" placeholder="Dán nguyên tin nhắn có dòng #SBG|..."></textarea>
+      </div>
+      <div class="flex gap-2">
+        <button type="button" id="parseCase" class="btn flex-1 text-sm" style="background: var(--navy); color: var(--navy-ink)">Đọc thông tin yêu cầu</button>
+        <button type="button" id="fromTab1" class="btn flex-1 text-sm border border-line">Lấy yêu cầu đang nhập ở tab Tra cứu</button>
+      </div>
+      <p id="caseMsg" class="text-xs text-muted" aria-live="polite"></p>
+      <div class="grid grid-cols-2 gap-3">
+        <div><label class="lbl" for="c_code">Mã thông báo</label><input id="c_code" class="field font-mono"></div>
+        <div><label class="lbl" for="c_road">Loại đường</label>
+          <select id="c_road" class="field"><option value="1">1 · Đường lớn QL/TL</option><option value="2">2 · Ô tô tránh</option><option value="3">3 · Ô tô vào</option><option value="4">4 · Ngõ xe máy</option></select></div>
+        <div><label class="lbl" for="c_lat">Lat</label><input id="c_lat" class="field num font-mono" inputmode="decimal"></div>
+        <div><label class="lbl" for="c_lng">Lng</label><input id="c_lng" class="field num font-mono" inputmode="decimal"></div>
+        <div><label class="lbl" for="c_mt">Mặt tiền (m)</label><input id="c_mt" class="field num" inputmode="decimal"></div>
+        <div><label class="lbl" for="c_sau">Chiều sâu (m)</label><input id="c_sau" class="field num" inputmode="decimal"></div>
+        <div><label class="lbl" for="c_shape">Hình dáng</label>
+          <select id="c_shape" class="field"><option value="VU">Vuông vắn</option><option value="NO">Nở hậu</option><option value="TH">Thóp hậu</option><option value="LD">Chữ L / Đâm đường</option></select></div>
+        <div><label class="lbl" for="c_shapeK">Hệ số hình dáng</label><input id="c_shapeK" class="field num" inputmode="decimal"></div>
+        <p id="c_shapeHint" class="col-span-2 -mt-2 text-xs text-muted"></p>
+        <div class="col-span-2"><label class="lbl" for="c_zone">Khu vực lọc dữ liệu</label>
+          <select id="c_zone" class="field"><option value="auto">Tự động theo điểm gần nhất</option><option value="urban">Đô thị</option><option value="rural">Nông thôn</option></select></div>
+        <div class="col-span-2"><label class="lbl" for="c_area">Khu vực (hiển thị trên thông báo)</label><input id="c_area" class="field"></div>
+      </div>
+    </section>
+
+    <section class="bg-surface border border-line rounded-2xl p-4 flex flex-col gap-3">
+      <div class="flex items-center justify-between gap-2">
+        <h2 class="font-bold text-base">2. Điểm đối chiếu sau khi lọc</h2>
+      </div>
+      <div id="pipeBox" class="grid grid-cols-2 gap-2 text-xs"></div>
+      <div class="overflow-x-auto"><svg id="compMap" viewBox="0 0 320 180" class="w-full max-w-full rounded-xl" style="background: var(--sunk)" role="img" aria-label="Vị trí tương đối của thửa đất cần tra cứu và các điểm dữ liệu"></svg></div>
+      <ol id="compList" class="flex flex-col gap-2"></ol>
+      <div id="suggestBox" class="rounded-xl p-3 text-sm" style="background: var(--sunk)"></div>
+    </section>
+
+
+    <section class="bg-surface border border-line rounded-2xl p-4 flex flex-col gap-3">
+      <h2 class="font-bold text-base">3. Phương pháp bổ trợ &amp; đối chiếu</h2>
+      <div class="seg grid grid-cols-3 gap-2" role="tablist">
+        <label><input type="radio" name="mtab" value="ex" checked><span class="block text-center rounded-xl border border-line py-2 px-1 text-[13px] font-semibold leading-tight">Chiết trừ<br>&amp; hao mòn</span></label>
+        <label><input type="radio" name="mtab" value="inc"><span class="block text-center rounded-xl border border-line py-2 px-1 text-[13px] font-semibold leading-tight">Vốn hóa<br>thu nhập</span></label>
+        <label><input type="radio" name="mtab" value="res"><span class="block text-center rounded-xl border border-line py-2 px-1 text-[13px] font-semibold leading-tight">Thặng dư<br>phân lô</span></label>
+      </div>
+
+      <!-- Chiết trừ & hao mòn -->
+      <div id="m_ex" class="flex flex-col gap-3">
+        <p class="text-xs text-muted">V công trình = S sàn × Đơn giá xây mới × (1 − Tỷ lệ hao mòn). Dùng cho công trình của thửa đang xử lý, hoặc để tách đơn giá đất thuần từ một giao dịch nhà + đất.</p>
+        <div class="grid grid-cols-2 gap-3">
+          <div><label class="lbl" for="x_type">Loại nhà</label>
+            <select id="x_type" class="field"><option value="c4">Nhà cấp 4</option><option value="t23" selected>Nhà 2–3 tầng</option><option value="t4">Nhà 4+ tầng / Biệt thự</option></select></div>
+          <div><label class="lbl" for="x_unit">Đơn giá xây mới (tr/m²)</label><input id="x_unit" class="field num" inputmode="decimal"></div>
+          <div><label class="lbl" for="x_floor">S sàn (m²)</label><input id="x_floor" class="field num" inputmode="decimal" value="150"></div>
+          <div><label class="lbl" for="x_mode">Cách tính hao mòn</label>
+            <select id="x_mode" class="field"><option value="age">Tuổi đời</option><option value="part">Kết cấu chính</option><option value="pct">Nhập trực tiếp %</option></select></div>
+        </div>
+        <p id="x_unitHint" class="-mt-2 text-xs text-muted"></p>
+        <div id="x_age" class="grid grid-cols-2 gap-3">
+          <div><label class="lbl" for="x_eff">Tuổi đời hiệu quả (năm)</label><input id="x_eff" class="field num" inputmode="decimal" value="10"></div>
+          <div><label class="lbl" for="x_econ">Tuổi đời kinh tế (năm)</label><input id="x_econ" class="field num" inputmode="decimal" value="50"></div>
+        </div>
+        <div id="x_part" class="flex flex-col gap-2" hidden>
+          <div class="grid grid-cols-[1fr_70px_80px] gap-2 text-[11px] font-semibold uppercase tracking-wider text-muted"><span>Kết cấu</span><span class="text-right">Tỷ trọng %</span><span class="text-right">Còn lại %</span></div>
+          <div id="x_parts" class="flex flex-col gap-2"></div>
+        </div>
+        <div id="x_pctWrap" hidden><label class="lbl" for="x_pct">Tỷ lệ hao mòn (%)</label><input id="x_pct" class="field num" inputmode="decimal" value="20"></div>
+        <div id="x_out" class="rounded-xl p-3 text-sm" style="background: var(--sunk)"></div>
+        <button type="button" id="x_use" class="btn w-full text-sm" style="background: var(--navy); color: var(--navy-ink)">Dùng làm giá trị công trình trên thông báo</button>
+        <details class="rounded-xl border border-line p-3">
+          <summary class="text-sm font-semibold cursor-pointer">Tách đơn giá đất thuần từ một giao dịch nhà + đất</summary>
+          <div class="grid grid-cols-2 gap-3 mt-3">
+            <div><label class="lbl" for="x_price">Giá giao dịch (tr)</label><input id="x_price" class="field num" inputmode="decimal" value="3550"></div>
+            <div><label class="lbl" for="x_land">DT thửa (m²)</label><input id="x_land" class="field num" inputmode="decimal" value="100"></div>
+            <div class="col-span-2"><label class="lbl" for="x_nonre">Tài sản không phải BĐS (tr)</label><input id="x_nonre" class="field num" inputmode="decimal" value="0"></div>
+          </div>
+          <p class="text-xs text-muted mt-2">Dùng chính công trình đã khai báo ở trên (loại nhà, S sàn, hao mòn) cho giao dịch này.</p>
+          <div id="x_landOut" class="rounded-xl p-3 text-sm mt-2" style="background: var(--sunk)"></div>
+        </details>
+      </div>
+
+      <!-- Vốn hóa thu nhập -->
+      <div id="m_inc" class="flex flex-col gap-3" hidden>
+        <p class="text-xs text-muted">V = I / R. I = Doanh thu cho thuê năm × (1 − tỷ lệ trống − thất thu) − Chi phí vận hành, duy tu (không gồm khấu hao).</p>
+        <div class="grid grid-cols-2 gap-3">
+          <div><label class="lbl" for="i_rent">Giá thuê (tr/tháng)</label><input id="i_rent" class="field num" inputmode="decimal" value="30"></div>
+          <div><label class="lbl" for="i_vac">Tỷ lệ trống (%)</label><input id="i_vac" class="field num" inputmode="decimal" value="10"></div>
+          <div><label class="lbl" for="i_bad">Thất thu nợ dây dưa (%)</label><input id="i_bad" class="field num" inputmode="decimal" value="0"></div>
+          <div><label class="lbl" for="i_opex">Chi phí vận hành (tr/năm)</label><input id="i_opex" class="field num" inputmode="decimal" value="24"></div>
+          <div class="col-span-2"><label class="lbl" for="i_r">Tỷ suất vốn hóa R (%/năm)</label><input id="i_r" class="field num" inputmode="decimal" value="12"></div>
+        </div>
+        <div id="i_out" class="rounded-xl p-3 text-sm" style="background: var(--sunk)"></div>
+        <label class="text-sm flex items-center gap-2"><input type="checkbox" id="i_on"> Đưa kết quả đối chiếu lên thông báo</label>
+      </div>
+
+      <!-- Thặng dư -->
+      <div id="m_res" class="flex flex-col gap-3" hidden>
+        <p class="text-xs text-muted">V = Σ (DTₜ − CPₜ)/(1+r)ᵗ. Lợi nhuận nhà đầu tư tính % trên chi phí không gồm lãi vay. Không tính chi phí bồi thường, giải phóng mặt bằng.</p>
+        <div class="grid grid-cols-2 gap-3">
+          <div><label class="lbl" for="t_lots">Diện tích bán được (m²)</label><input id="t_lots" class="field num" inputmode="decimal" value="840"></div>
+          <div><label class="lbl" for="t_sell">Đơn giá bán lô (tr/m²)</label><input id="t_sell" class="field num" inputmode="decimal" value="18"></div>
+          <div><label class="lbl" for="t_demo">Phá dỡ, san lấp (tr)</label><input id="t_demo" class="field num" inputmode="decimal" value="180"></div>
+          <div><label class="lbl" for="t_infra">Hạ tầng cơ bản (tr)</label><input id="t_infra" class="field num" inputmode="decimal" value="1450"></div>
+          <div><label class="lbl" for="t_fee">Thuế, phí, tách thửa (tr)</label><input id="t_fee" class="field num" inputmode="decimal" value="420"></div>
+          <div><label class="lbl" for="t_mgmt">Quản lý, bán hàng (tr)</label><input id="t_mgmt" class="field num" inputmode="decimal" value="460"></div>
+          <div><label class="lbl" for="t_int">Lãi vay (tr)</label><input id="t_int" class="field num" inputmode="decimal" value="310"></div>
+          <div><label class="lbl" for="t_pro">Lợi nhuận NĐT (% CP)</label><input id="t_pro" class="field num" inputmode="decimal" value="15"></div>
+          <div><label class="lbl" for="t_n">Số năm bán hàng</label><input id="t_n" class="field num" inputmode="numeric" value="1"></div>
+          <div><label class="lbl" for="t_r">Tỷ suất chiết khấu r (%)</label><input id="t_r" class="field num" inputmode="decimal" value="10"></div>
+          <div class="col-span-2"><label class="lbl" for="t_area">Diện tích khu đất gốc (m²)</label><input id="t_area" class="field num" inputmode="decimal" value="1200"></div>
+        </div>
+        <p class="text-xs text-muted -mt-1">Doanh thu chia đều năm 1…n; chi phí chi ở năm 0; lãi vay và lợi nhuận phân bổ theo năm bán hàng.</p>
+        <div id="t_out" class="rounded-xl p-3 text-sm" style="background: var(--sunk)"></div>
+        <label class="text-sm flex items-center gap-2"><input type="checkbox" id="t_on"> Đưa kết quả đối chiếu lên thông báo</label>
+      </div>
+    </section>
+
+    <section class="bg-surface border border-line rounded-2xl p-4 flex flex-col gap-3">
+      <h2 class="font-bold text-base">4. Chốt số liệu &amp; quy hoạch</h2>
+      <div class="grid grid-cols-2 gap-3">
+        <div><label class="lbl" for="f_unit">Đơn giá đất chốt (tr/m²)</label><input id="f_unit" class="field num" inputmode="decimal"></div>
+        <div><label class="lbl" for="f_ct">Giá trị công trình (tr)</label><input id="f_ct" class="field num" inputmode="decimal"></div>
+        <div><label class="lbl" for="f_ratio">Tỷ lệ tham chiếu vốn (%)</label><input id="f_ratio" class="field num" inputmode="decimal" value="75"></div>
+        <div><label class="lbl" for="f_band">Biên độ khung (±%)</label><input id="f_band" class="field num" inputmode="decimal" value="8"></div>
+      </div>
+      <div><label class="lbl" for="f_qh">Tình trạng quy hoạch</label>
+        <select id="f_qh" class="field">
+          <option value="ok">Phù hợp quy hoạch đất ở</option>
+          <option value="part">Dính một phần hành lang mở đường</option>
+          <option value="warn">Cảnh báo quy hoạch - Cần kiểm tra thực địa</option>
+        </select>
+      </div>
+      <div id="cutWrap" hidden><label class="lbl" for="f_cut">Diện tích trừ hành lang (m²)</label><input id="f_cut" class="field num" inputmode="decimal" value="0"></div>
+      <div><label class="lbl" for="f_note">Ghi chú đặc điểm</label><textarea id="f_note" rows="4" class="field text-[15px]"></textarea></div>
+    </section>
+
+    <section class="flex flex-col gap-3">
+      <div class="flex items-center justify-between">
+        <h2 class="font-bold text-base">5. Thông báo sơ bộ giá (xem trước)</h2>
+        <span class="text-xs text-muted">Khổ dọc 420px · xuất 2x</span>
+      </div>
+      <div class="ticket-wrap rounded-2xl border border-line" style="background: var(--sunk)">
+        <div class="p-3 flex justify-center min-w-[444px]"><div id="ticket" class="shadow-lg"></div></div>
+      </div>
+      <button type="button" id="exportBtn" class="btn w-full text-base" style="background: var(--gold); color: #14213d">Tải ảnh Thông báo sơ bộ giá (PNG)</button>
+      <p id="exportMsg" class="text-xs text-muted" aria-live="polite"></p>
+    </section>
+  </main>
+</div>
+
+<!-- Ảnh thông báo sau khi xuất -->
+<div id="imgModal" class="fixed inset-0 z-[70] bg-black/70 overflow-y-auto" hidden>
+  <div class="gutter py-6 max-w-md mx-auto flex flex-col gap-3" style="padding-top: calc(env(safe-area-inset-top, 0px) + 24px); padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 24px)">
+    <div class="flex items-center justify-between text-white">
+      <div class="font-bold">Ảnh Thông báo sơ bộ giá</div>
+      <button type="button" id="closeImg" class="btn !py-1.5 !px-3 text-sm border border-white/40 text-white">Đóng</button>
+    </div>
+    <p class="text-white/85 text-sm">Nếu nút tải không lưu được (trình xem nhúng chặn tải file), nhấn giữ vào ảnh và chọn <b>Lưu ảnh</b>, rồi gửi Zalo.</p>
+    <img id="imgOut" alt="Ảnh Thông báo sơ bộ giá" class="w-full rounded-lg bg-white">
+    <div class="grid grid-cols-2 gap-2">
+      <button type="button" id="dlAgain" class="btn text-sm" style="background: var(--gold); color: #14213d">Tải PNG</button>
+      <button type="button" id="shareImg" class="btn text-sm bg-white text-[#14213d]">Chia sẻ (Zalo…)</button>
+    </div>
+  </div>
+</div>
+
+<!-- Cài đặt -->
+<div id="settings" class="fixed inset-0 z-[70] bg-black/60 overflow-y-auto" hidden>
+  <div class="gutter max-w-xl mx-auto" style="padding-top: calc(env(safe-area-inset-top, 0px) + 16px); padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 16px)">
+    <div class="bg-surface rounded-2xl border border-line p-4 flex flex-col gap-4">
+      <div class="flex items-center justify-between"><h2 class="font-extrabold text-lg">Cài đặt</h2><button type="button" id="closeSettings" class="btn !py-1.5 !px-3 text-sm border border-line">Đóng</button></div>
+
+      <div class="flex flex-col gap-3">
+        <h3 class="font-bold">Tài khoản nhận tiền (VietQR)</h3>
+        <div><label class="lbl" for="s_recv">Đơn vị nhận tiền (mã VietQR)</label>
+          <select id="s_recv" class="field">
+            <option value="970436">VCB</option><option value="970418">BIDV</option><option value="970415">CTG</option><option value="970405">AGR</option>
+            <option value="970422">MB</option><option value="970407">TCB</option><option value="970416">ACB</option><option value="970432">VPB</option>
+            <option value="970423">TPB</option><option value="970403">STB</option><option value="970448">OCB</option><option value="970441">VIB</option>
+          </select></div>
+        <div><label class="lbl" for="s_acc">Số tài khoản</label><input id="s_acc" class="field font-mono" inputmode="numeric" autocomplete="off"></div>
+        <div><label class="lbl" for="s_name">Tên chủ tài khoản (không dấu)</label><input id="s_name" class="field" autocomplete="off"></div>
+        <p class="text-xs text-muted">Nên dùng tài khoản riêng cho dịch vụ này để tách bạch dòng tiền.</p>
+      </div>
+
+      <div class="flex flex-col gap-3">
+        <h3 class="font-bold">Đơn giá xây dựng mới (tr/m² sàn)</h3>
+        <div class="grid grid-cols-3 gap-3">
+          <div><label class="lbl" for="s_c4">Cấp 4</label><input id="s_c4" class="field num" inputmode="decimal"></div>
+          <div><label class="lbl" for="s_t23">2–3 tầng</label><input id="s_t23" class="field num" inputmode="decimal"></div>
+          <div><label class="lbl" for="s_t4">4+ tầng</label><input id="s_t4" class="field num" inputmode="decimal"></div>
+        </div>
+        <p class="text-xs text-muted">Khung tham chiếu: cấp 4 từ 2,5 đến 3,5; 2–3 tầng từ 5,5 đến 6,5; 4+ tầng, biệt thự từ 6,5 đến 8,0. Giá trị ngoài khung sẽ được đưa về biên gần nhất.</p>
+      </div>
+
+      <div class="flex flex-col gap-3">
+        <h3 class="font-bold">Tham số thuật toán</h3>
+        <div class="grid grid-cols-3 gap-3">
+          <div><label class="lbl" for="s_rU">Bán kính đô thị (m)</label><input id="s_rU" class="field num" inputmode="numeric"></div>
+          <div><label class="lbl" for="s_rR">Bán kính nông thôn (m)</label><input id="s_rR" class="field num" inputmode="numeric"></div>
+          <div><label class="lbl" for="s_kDeep">Hệ số phần sâu &gt;25m</label><input id="s_kDeep" class="field num" inputmode="decimal"></div>
+          <div><label class="lbl" for="s_kNO">Nở hậu</label><input id="s_kNO" class="field num" inputmode="decimal"></div>
+          <div><label class="lbl" for="s_kTH">Thóp hậu</label><input id="s_kTH" class="field num" inputmode="decimal"></div>
+          <div><label class="lbl" for="s_kLD">Chữ L / Đâm đường</label><input id="s_kLD" class="field num" inputmode="decimal"></div>
+        </div>
+        <p class="text-xs text-muted">Khung cho phép: phần sâu từ 0,55 đến 0,60; nở hậu từ 1,03 đến 1,05; thóp hậu từ 0,92 đến 0,95; chữ L, đâm đường từ 0,85 đến 0,90. Lọc nhiễu ±25% so với trung vị khi có từ 4 điểm; trọng số 1/(d² + 100).</p>
+      </div>
+
+      <div class="flex flex-col gap-3">
+        <h3 class="font-bold">Đồng bộ Google Sheets</h3>
+        <div><label class="lbl" for="s_csv">Link CSV công khai</label><input id="s_csv" class="field font-mono text-[13px]" placeholder="https://docs.google.com/spreadsheets/d/.../export?format=csv"></div>
+        <div class="flex gap-2">
+          <button type="button" id="syncCsv" class="btn flex-1 text-sm" style="background: var(--navy); color: var(--navy-ink)">Đồng bộ ngay</button>
+          <button type="button" id="useSample" class="btn flex-1 text-sm border border-line">Dùng lại dữ liệu mẫu</button>
+        </div>
+        <details class="rounded-xl border border-line p-3">
+          <summary class="text-sm font-semibold cursor-pointer">Hoặc dán nội dung CSV</summary>
+          <textarea id="s_paste" rows="5" class="field font-mono text-[12px] mt-2" placeholder='Toa do,Khu vuc,Dien tich,Mat tien,Loai duong,Don gia,Ghi chu&#10;"18.6702, 105.6985",P. Ha Huy Tap,120,6,2,42,Vuong'></textarea>
+          <button type="button" id="loadPaste" class="btn w-full mt-2 text-sm border border-line">Nạp dữ liệu đã dán</button>
+        </details>
+        <p id="syncMsg" class="text-xs" aria-live="polite"></p>
+        <p class="text-xs text-muted">Cấu trúc 7 cột: Tọa độ (Lat, Lng) · Khu vực · Diện tích (m²) · Mặt tiền (m) · Phân loại đường (1–4) · Đơn giá đất thuần (tr/m²) · Ghi chú. Chấp nhận thêm dạng 8 cột tách Lat, Lng. Lưu ý: link CSV công khai cho phép bất kỳ ai có link tải toàn bộ kho giá.</p>
+      </div>
+
+      <button type="button" id="saveSettings" class="btn w-full" style="background: var(--gold); color: #14213d">Lưu cài đặt</button>
+    </div>
+  </div>
+</div>
+
+<script>
+(() => {
+  'use strict';
+
+  /* ---------------- Dữ liệu mẫu (MINH HỌA, không phải giá thật) ---------------- */
+  const SAMPLE = [
+    { lat: 18.6738, lng: 105.6952, area: 'P. Hà Huy Tập, TP Vinh', dt: 120, mt: 6,   road: 1, price: 70,  note: 'Mặt đường Lê Duẩn, vuông vắn' },
+    { lat: 18.6712, lng: 105.6990, area: 'P. Hà Huy Tập, TP Vinh', dt: 100, mt: 5,   road: 2, price: 42,  note: 'Đường ô tô tránh, gần chợ' },
+    { lat: 18.6745, lng: 105.7030, area: 'P. Hà Huy Tập, TP Vinh', dt: 120, mt: 6,   road: 2, price: 44,  note: 'Đường 12m, gần trường học' },
+    { lat: 18.6660, lng: 105.6930, area: 'P. Hưng Bình, TP Vinh',  dt: 90,  mt: 5,   road: 2, price: 40,  note: 'Khu quy hoạch, vuông vắn' },
+    { lat: 18.6775, lng: 105.6975, area: 'P. Hưng Bình, TP Vinh',  dt: 110, mt: 5.5, road: 2, price: 45,  note: 'Gần công viên, sâu 20m' },
+    { lat: 18.6755, lng: 105.7018, area: 'P. Hà Huy Tập, TP Vinh', dt: 90,  mt: 4.5, road: 3, price: 28,  note: 'Ngõ ô tô vào, nở hậu nhẹ' },
+    { lat: 18.6690, lng: 105.6965, area: 'P. Hà Huy Tập, TP Vinh', dt: 80,  mt: 4,   road: 3, price: 26,  note: 'Ngõ ô tô 4m' },
+    { lat: 18.7012, lng: 105.6788, area: 'Xã Nghi Phú, TP Vinh',   dt: 150, mt: 7,   road: 1, price: 52,  note: 'Mặt đường Nguyễn Sỹ Sách' },
+    { lat: 18.8085, lng: 105.7172, area: 'P. Thu Thủy, TX Cửa Lò', dt: 150, mt: 7.5, road: 1, price: 60,  note: 'Mặt đường Bình Minh, hướng biển' },
+    { lat: 18.8150, lng: 105.7080, area: 'P. Nghi Hương, TX Cửa Lò', dt: 150, mt: 6, road: 2, price: 24,  note: 'Đường ô tô tránh, cách biển 1km' },
+    { lat: 18.8040, lng: 105.7105, area: 'P. Nghi Thu, TX Cửa Lò', dt: 130, mt: 5,   road: 3, price: 16,  note: 'Ngõ ô tô, cách biển 600m' },
+    { lat: 18.9895, lng: 105.5980, area: 'TT Diễn Châu, H. Diễn Châu', dt: 220, mt: 8, road: 1, price: 28, note: 'Mặt QL1A, sâu 27,5m' },
+    { lat: 18.9920, lng: 105.6010, area: 'TT Diễn Châu, H. Diễn Châu', dt: 180, mt: 6, road: 2, price: 16, note: 'Đường liên xã, ô tô tránh' },
+    { lat: 18.9850, lng: 105.6080, area: 'Xã Diễn Thành, H. Diễn Châu', dt: 200, mt: 8, road: 3, price: 8.5, note: 'Đất ở + vườn, sâu 25m' },
+    { lat: 18.3425, lng: 105.9055, area: 'P. Nam Hà, TP Hà Tĩnh',  dt: 110, mt: 5.5, road: 1, price: 48,  note: 'Mặt đường Trần Phú' },
+    { lat: 18.3455, lng: 105.9010, area: 'P. Bắc Hà, TP Hà Tĩnh',  dt: 120, mt: 5,   road: 2, price: 30,  note: 'Đường 9m, khu dân cư cũ' },
+    { lat: 18.3380, lng: 105.9120, area: 'P. Thạch Linh, TP Hà Tĩnh', dt: 150, mt: 6, road: 3, price: 17, note: 'Đường ô tô vào 5m' },
+    { lat: 18.0720, lng: 106.2950, area: 'P. Sông Trí, TX Kỳ Anh', dt: 200, mt: 8,   road: 1, price: 18,  note: 'Mặt QL1A' },
+    { lat: 18.0680, lng: 106.3010, area: 'P. Kỳ Trinh, TX Kỳ Anh', dt: 240, mt: 8,   road: 3, price: 7,   note: 'Sâu 30m, đất ở + vườn' },
+    { lat: 18.6355, lng: 105.7710, area: 'TT Xuân An, H. Nghi Xuân', dt: 200, mt: 8, road: 1, price: 14,  note: 'Mặt QL8B, sâu 25m' }
+  ];
+
+  /* ---------------- Tham số nghiệp vụ ---------------- */
+  const SHAPE = { VU: { k: 1.00, name: 'Vuông vắn' }, NO: { k: 1.03, name: 'Nở hậu' }, TH: { k: 0.92, name: 'Thóp hậu' }, LD: { k: 0.88, name: 'Chữ L / Đâm đường' } };
+  const SHAPE_RANGE = { VU: [1.00, 1.00], NO: [1.03, 1.05], TH: [0.92, 0.95], LD: [0.85, 0.90] };
+  const BUILD_RANGE = { c4: [2.5, 3.5], t23: [5.5, 6.5], t4: [6.5, 8.0] };
+  const DEEP_RANGE = [0.55, 0.60];
+  const OUTLIER = 0.25, CTRL_OK = 0.10, CTRL_MAX = 0.15, CROSS_MAX = 0.20;
+  const PARTS = [['Móng', 10], ['Khung, cột, dầm', 30], ['Tường', 20], ['Mái', 20], ['Nền, sàn', 20]];
+  const ROAD_NAME = { 1: 'Mặt đường lớn/QL/TL', 2: 'Ô tô tránh', 3: 'Ô tô vào', 4: 'Ngõ xe máy' };
+  const ROAD_K = { 1: 1.00, 2: 0.60, 3: 0.45, 4: 0.30 };       // quy đổi khi mượn loại đường liền kề
+  const CT_NAME = { none: 'Đất trống', c4: 'Nhà cấp 4', t23: 'Nhà 2–3 tầng', t4: 'Nhà 4+ tầng' };
+  const D0 = 25;                                                // phần sâu vượt 25m chiết giảm còn 55%–60%
+  let K_DEEP = 0.6;
+  const PKG = { m1: { name: 'Hội viên 1 Tháng', amt: 299000, code: '1T', days: 30, gift: 'Giảm 15% phí Thông báo sơ bộ & Quy hoạch từ xa' },
+    m3: { name: 'Hội viên 3 Tháng', amt: 790000, code: '3T', days: 90, gift: 'Tặng 01 lượt Thông báo sơ bộ & Quy hoạch từ xa' },
+    m6: { name: 'Hội viên 6 Tháng', amt: 1390000, code: '6T', days: 180, gift: 'Tặng 03 lượt Thông báo sơ bộ & Quy hoạch từ xa, ưu tiên xử lý nhanh' },
+    1: { name: 'Tra nhanh tự động', amt: 49000 }, 2: { name: 'Thông báo sơ bộ giá + Kiểm tra quy hoạch từ xa', amt: 300000 }, 3: { name: 'Khảo sát thực địa + Thông báo sơ bộ giá', amt: 500000 } };
+  const QH = {
+    ok:   { text: 'Phù hợp quy hoạch đất ở', color: '#12805c', bg: '#e3f4ec' },
+    part: { text: 'Dính một phần hành lang mở đường (đã trừ diện tích)', color: '#9a5b00', bg: '#fbefd9' },
+    warn: { text: 'Cảnh báo quy hoạch - Cần kiểm tra thực địa', color: '#b42318', bg: '#fde7e4' }
+  };
+
+  const DEFAULT_SETTINGS = { v: 2, bin: '970422', acc: '0000000000', name: 'TEN CHU TAI KHOAN', c4: 3.0, t23: 6.0, t4: 7.25, csv: '',
+    rU: 2000, rR: 5000, kDeep: 0.60, kNO: 1.03, kTH: 0.92, kLD: 0.88 };
+  const store = {
+    get(k, d) { try { const v = localStorage.getItem(k); return v ? JSON.parse(v) : d; } catch (e) { return d; } },
+    set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) { /* bỏ qua khi bị chặn */ } }
+  };
+  const clamp = (x, [a, b], d) => Number.isFinite(x) ? Math.min(b, Math.max(a, x)) : d;
+  function normSettings(raw) {
+    const o = Object.assign({}, DEFAULT_SETTINGS, raw || {});
+    if (o.v !== 2) { o.c4 = DEFAULT_SETTINGS.c4; o.t23 = DEFAULT_SETTINGS.t23; o.t4 = DEFAULT_SETTINGS.t4; o.v = 2; }   // bản cũ dùng khung khác
+    for (const t of ['c4', 't23', 't4']) o[t] = clamp(num(o[t]), BUILD_RANGE[t], DEFAULT_SETTINGS[t]);
+    o.kDeep = clamp(num(o.kDeep), DEEP_RANGE, DEFAULT_SETTINGS.kDeep);
+    for (const k of ['NO', 'TH', 'LD']) o['k' + k] = clamp(num(o['k' + k]), SHAPE_RANGE[k], DEFAULT_SETTINGS['k' + k]);
+    o.rU = clamp(num(o.rU), [300, 10000], 2000); o.rR = clamp(num(o.rR), [500, 20000], 5000);
+    return o;
+  }
+  function applyParams() {
+    K_DEEP = settings.kDeep;
+    for (const k of ['NO', 'TH', 'LD']) SHAPE[k].k = settings['k' + k];
+    document.querySelectorAll('[data-k]').forEach(el => { el.textContent = '×' + fmt(SHAPE[el.dataset.k].k, 2); });
+    document.querySelectorAll('[data-r]').forEach(el => { el.textContent = fmtDist(el.dataset.r === 'urban' ? settings.rU : settings.rR); });
+  }
+  let settings;
+  let DATA = SAMPLE.slice();
+  let dataSource = 'sample';
+
+  /* ---------------- Tiện ích ---------------- */
+  const $ = id => document.getElementById(id);
+  const num = v => {
+    if (v === null || v === undefined) return NaN;
+    let s = String(v).trim().replace(/\s/g, '');
+    if (s === '') return NaN;
+    if (s.includes(',') && !s.includes('.')) s = s.replace(',', '.');
+    else s = s.replace(/,/g, '');
+    return parseFloat(s);
+  };
+  const fmt = (x, d = 1) => Number.isFinite(x) ? x.toLocaleString('vi-VN', { minimumFractionDigits: d, maximumFractionDigits: d }) : '—';
+  const fmtMoney = tr => {                       // đầu vào: triệu đồng
+    if (!Number.isFinite(tr)) return '—';
+    if (Math.abs(tr) >= 1000) return (tr / 1000).toLocaleString('vi-VN', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' tỷ';
+    return Math.round(tr).toLocaleString('vi-VN') + ' triệu';
+  };
+  const fmtVnd = d => d.toLocaleString('vi-VN') + 'đ';
+  const fmtDist = m => m < 1000 ? Math.round(m) + ' m' : (m / 1000).toLocaleString('vi-VN', { maximumFractionDigits: 2 }) + ' km';
+  const fmtPct = (x, d = 1) => (x >= 0 ? '+' : '−') + fmt(Math.abs(x) * 100, d) + '%';
+  const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  const today = () => { const d = new Date(); return String(d.getDate()).padStart(2, '0') + '/' + String(d.getMonth() + 1).padStart(2, '0') + '/' + d.getFullYear(); };
+  const radioVal = name => (document.querySelector(`input[name="${name}"]:checked`) || {}).value;
+  const setRadio = (name, v) => { const el = document.querySelector(`input[name="${name}"][value="${v}"]`); if (el) el.checked = true; };
+  settings = normSettings(store.get('tbsb_settings', {}));
+
+  /* ---------------- Haversine ---------------- */
+  const R = 6371000, rad = x => x * Math.PI / 180;
+  const haversine = (a, b) => 2 * R * Math.asin(Math.sqrt(
+    Math.sin(rad(b.lat - a.lat) / 2) ** 2 + Math.cos(rad(a.lat)) * Math.cos(rad(b.lat)) * Math.sin(rad(b.lng - a.lng) / 2) ** 2));
+
+  /* ---------------- Hệ số ---------------- */
+  const kDepth = D => (!Number.isFinite(D) || D <= 0) ? 1 : (Math.min(D, D0) + K_DEEP * Math.max(0, D - D0)) / D;
+
+  /* ---------------- Tách tọa độ từ link ---------------- */
+  function parseCoords(text) {
+    if (!text) return { error: 'empty' };
+    let s = text.trim();
+    try { s = decodeURIComponent(s); } catch (e) { /* giữ nguyên */ }
+    const pats = [
+      /!3d(-?\d{1,3}\.\d+)!4d(-?\d{1,3}\.\d+)/,
+      /[?&](?:q|query|ll|destination|daddr|center)=(?:loc:)?\s*(-?\d{1,3}\.\d+)\s*,\s*(-?\d{1,3}\.\d+)/,
+      /@(-?\d{1,3}\.\d+),\s*(-?\d{1,3}\.\d+)/,
+      /\/place\/(-?\d{1,3}\.\d+)\s*,\s*\+?(-?\d{1,3}\.\d+)/,
+      /^\s*(-?\d{1,3}[.,]\d+)\s*[,;\s]\s*(-?\d{1,3}[.,]\d+)\s*$/,
+      /(-?\d{1,2}\.\d{3,})\s*,\s*(-?\d{2,3}\.\d{3,})/
+    ];
+    for (const p of pats) {
+      const m = s.match(p);
+      if (m) {
+        let lat = num(m[1]), lng = num(m[2]);
+        if (Math.abs(lat) > 90 && Math.abs(lng) <= 90) [lat, lng] = [lng, lat];
+        if (lat > 100 && lng < 30) [lat, lng] = [lng, lat];
+        if (Number.isFinite(lat) && Number.isFinite(lng)) return { lat, lng };
+      }
+    }
+    if (/goo\.gl|maps\.app/i.test(s)) return { error: 'short' };
+    return { error: 'none' };
+  }
+  const inRegion = (lat, lng) => lat > 17.5 && lat < 19.7 && lng > 103.8 && lng < 106.8;
+
+  /* ---------------- Thuật toán so sánh có lọc không gian ----------------
+     1) lọc cùng loại đường  2) bán kính 2 km (đô thị) / 5 km (nông thôn), thiếu thì nới ×2 rồi mượn đường liền kề
+     3) chuẩn hóa chiều sâu  4) lọc nhiễu ±25% quanh trung vị khi n ≥ 4  5) trọng số 1/(d² + 100)
+     6) kiểm soát chênh lệch mức đại diện so với từng mức chỉ dẫn: ≤10% đạt, ≤15% cảnh báo */
+  const median = a => { const v = [...a].sort((x, y) => x - y), m = v.length >> 1; return v.length % 2 ? v[m] : (v[m - 1] + v[m]) / 2; };
+  const isUrbanName = name => /^\s*(P\.|Phường|TT\b|TT\.|Thị trấn)/i.test(name || '');
+  function zoneOf(s, all) {
+    if (s.zone === 'urban' || s.zone === 'rural') return { zone: s.zone, auto: false };
+    const near = all.slice().sort((a, b) => a.d - b.d)[0];
+    return { zone: near && isUrbanName(near.area) ? 'urban' : 'rural', auto: true, ref: near ? near.area : '' };
+  }
+  const districtOf = name => { const p = String(name || '').split(','); return p.length > 1 ? p[p.length - 1].trim() : ''; };
+  function estimate(s) {
+    const subj = { lat: s.lat, lng: s.lng };
+    const all = DATA.filter(c => Number.isFinite(c.lat) && Number.isFinite(c.lng) && c.price > 0).map(c => {
+      const depth = c.mt > 0 ? c.dt / c.mt : NaN;
+      const kd = kDepth(depth);
+      return Object.assign({}, c, { d: haversine(subj, c), depth, kd, std: c.price / kd, conv: 1 });
+    });
+    const z = zoneOf(s, all);
+    const r0 = z.zone === 'urban' ? settings.rU : settings.rR;
+    // chặn lấy điểm khác địa bàn (VD Nghi Xuân lấy giá TP Vinh khi nới bán kính): chỉ giữ cùng huyện/thị/thành phố với điểm gần nhất
+    const nearest = all.slice().sort((a, b) => a.d - b.d)[0];
+    const district = nearest ? districtOf(nearest.area) : '';
+    const pool = district ? all.filter(c => !districtOf(c.area) || districtOf(c.area) === district) : all;
+    const same = pool.filter(c => c.road === s.road);
+    let radius = r0, expanded = false, borrowed = false;
+    let comps = same.filter(c => c.d <= radius);
+    if (comps.length < 3) { radius = r0 * 2; expanded = true; comps = same.filter(c => c.d <= radius); }
+    if (comps.length < 3) {
+      const extra = pool.filter(c => Math.abs(c.road - s.road) === 1 && c.d <= radius)
+        .map(c => { const conv = ROAD_K[s.road] / ROAD_K[c.road]; return Object.assign({}, c, { std: c.std * conv, conv }); });
+      if (extra.length) { borrowed = true; comps = comps.concat(extra); }
+    }
+    comps.sort((a, b) => a.d - b.d);
+    comps = comps.slice(0, 6);
+    let removed = [], med = NaN;
+    if (comps.length >= 4) {
+      med = median(comps.map(c => c.std));
+      removed = comps.filter(c => Math.abs(c.std / med - 1) > OUTLIER);
+      removed.forEach(c => { c.out = true; });
+      comps = comps.filter(c => Math.abs(c.std / med - 1) <= OUTLIER);
+    }
+    const meta = { district, zone: z.zone, zoneAuto: z.auto, zoneRef: z.ref, r0, radius, expanded, borrowed, removed, med, sameCount: same.length };
+    if (comps.length < 2) return Object.assign({ status: 'NO_DATA', comps }, meta);
+
+    const w = comps.map(c => 1 / (c.d * c.d + 100));
+    const W = w.reduce((a, b) => a + b, 0);
+    comps.forEach((c, i) => { c.w = w[i] / W; });
+    const base = comps.reduce((a, c) => a + c.std * c.w, 0);
+    const mean = comps.reduce((a, c) => a + c.std, 0) / comps.length;
+    const cv = Math.sqrt(comps.reduce((a, c) => a + (c.std - mean) ** 2, 0) / (comps.length - 1)) / mean;
+    const avgD = comps.reduce((a, c) => a + c.d, 0) / comps.length;
+    comps.forEach(c => { c.dev = (base - c.std) / c.std; });
+    const ctrl = Math.max(...comps.map(c => Math.abs(c.dev)));
+    const ctrlState = ctrl <= CTRL_OK ? 'ok' : ctrl <= CTRL_MAX ? 'warn' : 'bad';
+
+    const kd = kDepth(s.sau);
+    const ks = Number.isFinite(s.shapeK) ? s.shapeK : SHAPE[s.shape].k;
+    const unit = base * kd * ks;
+    const land = unit * s.dt;
+    const ct = s.ctValue;
+    const total = land + ct;
+    const spread = Math.min(0.25, Math.max(0.08, 1.5 * cv) + (borrowed ? 0.05 : 0) + (expanded ? 0.03 : 0) + (ctrlState === 'warn' ? 0.03 : 0));
+    let grade = 'B';
+    if (!borrowed && !expanded && comps.length >= 4 && cv <= 0.10 && ctrlState === 'ok') grade = 'A';
+    if (comps.length < 3 || cv > 0.20 || ctrlState === 'bad') grade = 'C';
+    return Object.assign({ status: 'OK', comps, base, kd, ks, unit, land, ct, total, low: total * (1 - spread), high: total * (1 + spread),
+      spread, cv, avgD, grade, ctrl, ctrlState }, meta);
+  }
+  const zoneText = r => (r.zone === 'urban' ? 'Đô thị' : 'Nông thôn') + (r.zoneAuto ? ' (tự động)' : '');
+  const ctrlText = { ok: 'Đạt (≤10%)', warn: 'Cảnh báo (10–15%)', bad: 'Không đạt (>15%)' };
+
+  /* ---------------- Chiết trừ, hao mòn, vốn hóa, thặng dư ---------------- */
+  function depreciation(mode, p) {
+    if (mode === 'age') return p.econ > 0 ? Math.min(1, Math.max(0, p.eff / p.econ)) : NaN;
+    if (mode === 'part') {
+      const T = p.parts.reduce((a, x) => a + x.T, 0);
+      return T > 0 ? p.parts.reduce((a, x) => a + x.T * (1 - x.Q), 0) / T : NaN;   // H = Σ(Hi×Ti)/ΣTi, Hi = 1 − còn lại
+    }
+    return Math.min(1, Math.max(0, p.pct));
+  }
+  const buildValue = (floor, unit, dep) => floor * unit * (1 - dep);
+  function directCap({ rent, vac, bad, opex, R }) {
+    const PGI = rent * 12;
+    const EGI = PGI * (1 - vac - bad);
+    const I = EGI - opex;
+    return { PGI, EGI, I, V: R > 0 ? I / R : NaN };
+  }
+  function residual(p) {
+    const n = Math.max(1, Math.round(p.n));
+    const DT = p.lots * p.sell;
+    const base = p.demo + p.infra + p.fee + p.mgmt;            // chi phí tính lợi nhuận (không gồm lãi vay)
+    const profit = base * p.pro;
+    const CP = base + p.int + profit;
+    const flows = [{ t: 0, dt: 0, cp: base }];
+    for (let t = 1; t <= n; t++) flows.push({ t, dt: DT / n, cp: (p.int + profit) / n });
+    const V = flows.reduce((a, f) => a + (f.dt - f.cp) / (1 + p.r) ** f.t, 0);
+    return { DT, base, profit, CP, Vstatic: DT - CP, V, flows, n };
+  }
+
+  function ctValue(type, area, pct) {
+    if (type === 'none') return 0;
+    const g = num(settings[type]);
+    if (!(area > 0) || !(pct >= 0) || !Number.isFinite(g)) return 0;
+    return area * g * Math.min(100, pct) / 100;
+  }
+
+  /* ---------------- VietQR (EMVCo) dự phòng khi không tải được img.vietqr.io ---------------- */
+  const tlv = (id, v) => id + String(v.length).padStart(2, '0') + v;
+  function crc16(str) {
+    let crc = 0xFFFF;
+    for (let i = 0; i < str.length; i++) {
+      crc ^= str.charCodeAt(i) << 8;
+      for (let j = 0; j < 8; j++) crc = (crc & 0x8000) ? ((crc << 1) ^ 0x1021) & 0xFFFF : (crc << 1) & 0xFFFF;
+    }
+    return crc.toString(16).toUpperCase().padStart(4, '0');
+  }
+  function vietQrPayload(bin, acc, amount, info) {
+    const consumer = tlv('00', bin) + tlv('01', acc);
+    const mai = tlv('00', 'A000000727') + tlv('01', consumer) + tlv('02', 'QRIBFTTA');
+    let p = tlv('00', '01') + tlv('01', '12') + tlv('38', mai) + tlv('53', '704') + tlv('54', String(amount)) + tlv('58', 'VN') + tlv('62', tlv('08', info)) + '6304';
+    return p + crc16(p);
+  }
+  function renderQR(slot, amount, info) {
+    const recvName = $('s_recv').querySelector(`option[value="${settings.bin}"]`)?.textContent || settings.bin;
+    const demo = !settings.acc || /^0+$/.test(settings.acc);
+    slot.innerHTML = `
+      <div class="flex flex-col items-center gap-2 rounded-xl border border-line p-3" style="background:#fff">
+        <div id="${slot.id}_qr" class="flex items-center justify-center" style="min-height:220px"></div>
+        <div class="text-center text-[13px]" style="color:#14213d">
+          <div class="font-bold">${esc(recvName)} · <span class="font-mono">${esc(settings.acc)}</span></div>
+          <div>${esc(settings.name)}</div>
+          <div class="font-mono font-bold mt-1">${fmtVnd(amount)} · ND: ${esc(info)}</div>
+        </div>
+      </div>
+      ${demo ? '<p class="text-xs mt-2" style="color: var(--warn)">Đang dùng tài khoản mẫu. Vào Cài đặt để nhập số tài khoản thật trước khi gửi mã QR.</p>' : ''}`;
+    const box = $(slot.id + '_qr');
+    const url = `https://img.vietqr.io/image/${encodeURIComponent(settings.bin)}-${encodeURIComponent(settings.acc)}-compact2.png?amount=${amount}&addInfo=${encodeURIComponent(info)}&accountName=${encodeURIComponent(settings.name)}`;
+    const img = new Image();
+    img.alt = 'Mã VietQR thanh toán';
+    img.width = 220; img.height = 220;
+    img.style.cssText = 'width:220px;height:auto';
+    let settled = false;
+    const fallback = () => {
+      if (settled) return; settled = true;
+      box.innerHTML = '';
+      try {
+        new QRCode(box, { text: vietQrPayload(settings.bin, settings.acc, amount, info), width: 220, height: 220, correctLevel: QRCode.CorrectLevel.M });
+      } catch (e) { box.textContent = 'Không tạo được mã QR.'; }
+    };
+    img.onload = () => { if (settled) return; settled = true; box.innerHTML = ''; box.appendChild(img); };
+    img.onerror = fallback;
+    setTimeout(fallback, 3500);
+    img.src = url;
+  }
+
+  /* ---------------- CSV ---------------- */
+  function parseCSV(text) {
+    const rows = []; let row = [], cur = '', q = false;
+    for (let i = 0; i < text.length; i++) {
+      const ch = text[i];
+      if (q) {
+        if (ch === '"') { if (text[i + 1] === '"') { cur += '"'; i++; } else q = false; }
+        else cur += ch;
+      } else if (ch === '"') q = true;
+      else if (ch === ',') { row.push(cur); cur = ''; }
+      else if (ch === '\n') { row.push(cur); rows.push(row); row = []; cur = ''; }
+      else if (ch !== '\r') cur += ch;
+    }
+    if (cur !== '' || row.length) { row.push(cur); rows.push(row); }
+    return rows.filter(r => r.some(c => c.trim() !== ''));
+  }
+  function rowsToData(rows) {
+    const out = [];
+    for (const r of rows) {
+      let lat, lng, rest;
+      const a = num(r[0]), b = num(r[1]);
+      if (r.length >= 8 && Number.isFinite(a) && Number.isFinite(b) && Math.abs(a) <= 90 && Math.abs(b) > 90) {
+        lat = a; lng = b; rest = r.slice(2);
+      } else {
+        const c = parseCoords(String(r[0] || '').replace(';', ','));
+        if (c.error) continue;
+        lat = c.lat; lng = c.lng; rest = r.slice(1);
+      }
+      const item = { lat, lng, area: (rest[0] || '').trim(), dt: num(rest[1]), mt: num(rest[2]), road: parseInt(rest[3], 10), price: num(rest[4]), note: (rest[5] || '').trim() };
+      if (Number.isFinite(item.dt) && Number.isFinite(item.mt) && item.road >= 1 && item.road <= 4 && item.price > 0) out.push(item);
+    }
+    return out;
+  }
+  function toCsvUrl(u) {
+    const m = u.match(/docs\.google\.com\/spreadsheets\/d\/([a-zA-Z0-9_-]+)/);
+    if (m && !/output=csv|format=csv/.test(u)) {
+      const g = u.match(/[#&?]gid=(\d+)/);
+      return `https://docs.google.com/spreadsheets/d/${m[1]}/export?format=csv${g ? '&gid=' + g[1] : ''}`;
+    }
+    return u;
+  }
+  function applyData(list, label) {
+    DATA = list; dataSource = label;
+    $('dataLabel').textContent = (label === 'sample' ? 'Dữ liệu mẫu' : 'Dữ liệu thật') + ' · ' + list.length + ' điểm';
+    $('dataDot').style.background = label === 'sample' ? 'var(--warn)' : 'var(--good)';
+    $('dataHint').textContent = label === 'sample' ? 'Số liệu minh họa, chưa phải giá thật.' : 'Đã đồng bộ lúc ' + new Date().toLocaleTimeString('vi-VN') + '.';
+    renderPins();
+    refreshTab2();
+  }
+  async function syncCsv(silent) {
+    const raw = ($('s_csv').value || settings.csv || '').trim();
+    const msg = $('syncMsg');
+    if (!raw) { if (!silent) { msg.style.color = 'var(--bad)'; msg.textContent = 'Chưa có link CSV.'; } return; }
+    const url = toCsvUrl(raw);
+    msg.style.color = 'var(--muted)'; msg.textContent = 'Đang tải dữ liệu…';
+    try {
+      const res = await fetch(url, { cache: 'no-store' });
+      if (!res.ok) throw new Error('HTTP ' + res.status);
+      const list = rowsToData(parseCSV(await res.text()));
+      if (!list.length) throw new Error('Không đọc được dòng hợp lệ nào');
+      applyData(list, 'sheet');
+      store.set('tbsb_cache', list);
+      msg.style.color = 'var(--good)'; msg.textContent = `Đã nạp ${list.length} điểm từ Google Sheets.`;
+    } catch (e) {
+      msg.style.color = 'var(--bad)';
+      msg.textContent = `Không tải được (${e.message}). Kiểm tra Sheet đã chia sẻ "Bất kỳ ai có link". Nếu đang mở trong trình xem nhúng, việc tải dữ liệu ngoài bị chặn: hãy dán nội dung CSV bên dưới hoặc mở file index.html trên hosting riêng.`;
+    }
+  }
+
+  /* ---------------- Tab ---------------- */
+  function showTab(n) {
+    $('tab1').hidden = n !== 1; $('tab2').hidden = n !== 2;
+    $('tabBtn1').setAttribute('aria-selected', n === 1); $('tabBtn2').setAttribute('aria-selected', n === 2);
+    store.set('tbsb_tab', n);
+    if (n === 2) refreshTab2();
+    if (n === 1 && map) setTimeout(() => map.invalidateSize(), 0);
+    window.scrollTo({ top: 0 });
+  }
+
+  /* ---------------- TAB 1 ---------------- */
+  function readForm() {
+    const lat = num($('lat').value), lng = num($('lng').value);
+    const mt = num($('mt').value), sau = num($('sau').value);
+    const type = $('ctType').value;
+    const ctArea = num($('ctArea').value), ctPct = num($('ctPct').value);
+    return { lat, lng, mt, sau, dt: mt * sau, shape: radioVal('shape') || 'VU', road: parseInt(radioVal('road') || '2', 10), zone: radioVal('zone') || 'auto',
+      ctType: type, ctArea: type === 'none' ? 0 : ctArea, ctPct: type === 'none' ? 0 : ctPct,
+      ctValue: ctValue(type, ctArea, ctPct), pkg: radioVal('pkg') || '1', link: $('mapLink').value.trim() };
+  }
+  function validate(f) {
+    if (!Number.isFinite(f.lat) || !Number.isFinite(f.lng)) return 'Chưa có tọa độ. Dán link Google Maps hoặc nhập Lat, Lng.';
+    if (!(f.mt > 0) || !(f.sau > 0)) return 'Nhập mặt tiền và chiều sâu lớn hơn 0.';
+    if (f.ctType !== 'none' && (!(f.ctArea > 0) || !(f.ctPct >= 0 && f.ctPct <= 100))) return 'Nhập diện tích sàn và độ mới còn lại (0–100%).';
+    return '';
+  }
+  function updateDims() {
+    const mt = num($('mt').value), sau = num($('sau').value);
+    $('dt').value = (mt > 0 && sau > 0) ? fmt(mt * sau, 1) + ' m²' : '';
+    const w = $('depthWarn');
+    if (sau > D0) {
+      w.hidden = false;
+      w.textContent = `Chiều sâu ${fmt(sau, 1)}m vượt ${D0}m: phần ${fmt(sau - D0, 1)}m phía sau tính ${fmt(K_DEEP * 100, 0)}% đơn giá. Hệ số chiều sâu cả thửa ≈ ${fmt(kDepth(sau), 3)}. Kiểm tra phần sau có phải đất vườn (CLN) không.`;
+    } else w.hidden = true;
+  }
+  function onLink() {
+    const t = $('mapLink').value;
+    const m = $('linkMsg');
+    if (!t.trim()) { m.textContent = ''; return; }
+    const c = parseCoords(t);
+    if (c.error === 'short') { m.style.color = 'var(--warn)'; m.textContent = 'Link rút gọn (maps.app.goo.gl) cần mở ra trước. Trên Google Maps: nhấn giữ vào ghim, copy dòng tọa độ rồi dán vào đây.'; return; }
+    if (c.error) { m.style.color = 'var(--bad)'; m.textContent = 'Không tìm thấy tọa độ trong nội dung đã dán.'; return; }
+    $('lat').value = c.lat.toFixed(6); $('lng').value = c.lng.toFixed(6);
+    m.style.color = inRegion(c.lat, c.lng) ? 'var(--good)' : 'var(--warn)';
+    m.textContent = inRegion(c.lat, c.lng) ? `Đã tách tọa độ: ${c.lat.toFixed(6)}, ${c.lng.toFixed(6)}` : 'Tọa độ nằm ngoài Nghệ An – Hà Tĩnh, kết quả sẽ kém tin cậy.';
+    updateMapsLink();
+    syncTargetFromInputs(true);
+  }
+  function updateMapsLink() {
+    const lat = num($('lat').value), lng = num($('lng').value);
+    $('openMaps').href = (Number.isFinite(lat) && Number.isFinite(lng)) ? `https://www.google.com/maps/search/?api=1&query=${lat},${lng}` : 'https://www.google.com/maps';
+  }
+  function updateCt() {
+    const t = $('ctType').value;
+    $('ctFields').hidden = t === 'none';
+    if (t !== 'none') $('ctHint').textContent = `Đơn giá xây mới đang dùng ${fmt(settings[t], 2)} tr/m² (khung ${fmt(BUILD_RANGE[t][0], 1)}–${fmt(BUILD_RANGE[t][1], 1)}). Giá trị = S sàn × đơn giá × chất lượng còn lại.`;
+  }
+  const isMember = p => /^m[136]$/.test(p);
+  function updateRunLabel() {
+    const p = radioVal('pkg') || '1';
+    $('phoneWrap').hidden = !isMember(p);
+    $('runBtn').textContent = p === '1' ? 'Tra giá ngay' : isMember(p) ? 'Tạo mã QR đăng ký hội viên' : 'Tạo đơn & mã QR thanh toán';
+  }
+  const normPhone = v => { let d = String(v || '').replace(/\D/g, ''); if (d.startsWith('84') && d.length === 11) d = '0' + d.slice(2); return d; };
+  function runMember(pk) {
+    const phone = normPhone($('phone').value);
+    if (!/^0[35789]\d{8}$/.test(phone)) { $('formMsg').textContent = 'Nhập số điện thoại di động 10 số (VD 0912345678).'; $('phone').focus(); return; }
+    $('formMsg').textContent = '';
+    store.set('tbsb_phone', phone);
+    const p = PKG[pk], info = `TBSB ${p.code} ${phone}`;
+    $('result1').hidden = true;
+    $('order').hidden = false;
+    $('orderLbl').textContent = 'Mã đăng ký hội viên';
+    $('orderCode').textContent = info;
+    $('orderPkg').textContent = p.name;
+    $('orderAmt').textContent = fmtVnd(p.amt);
+    renderQR($('qrSlot'), p.amt, info);
+    $('zaloText').value = [
+      `ĐĂNG KÝ ${p.name.toUpperCase()} (${fmtVnd(p.amt)})`,
+      `SĐT hội viên: ${phone}`,
+      `Quyền lợi: tra cứu tự động không giới hạn ${p.days} ngày; ${p.gift}`,
+      `Nội dung chuyển khoản: ${info}`,
+      `#HV|${p.code}|${phone}|${today()}`
+    ].join('\n');
+    $('copyMsg').textContent = 'Chuyển khoản đúng nội dung để kích hoạt. Sau đó bấm Copy và gửi qua Zalo cho người xử lý.';
+    $('order').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+
+  const gradeStyle = g => g === 'A' ? 'background:#e3f4ec;color:#12805c' : g === 'B' ? 'background:#fbefd9;color:#9a5b00' : 'background:#fde7e4;color:#b42318';
+  const gradeText = { A: 'Tin cậy A', B: 'Tin cậy B', C: 'Tin cậy C' };
+
+  function runPkg1(f, opt = {}) {
+    const r = estimate(f);
+    const box = $('result1');
+    if (!opt.keepOrder) $('order').hidden = true;
+    box.hidden = false;
+    drawLinks(f, r);
+    if (r.status !== 'OK') {
+      $('r1Grade').textContent = 'Thiếu dữ liệu'; $('r1Grade').style.cssText = gradeStyle('C');
+      $('r1Range').textContent = 'Chưa đủ điểm so sánh';
+      $('r1Mid').textContent = `Trong bán kính ${fmtDist(r.radius)} (${zoneText(r)}) chưa đủ 2 điểm đối chiếu sau lọc. Không tính phí lượt tra.`;
+      $('r1Cap').textContent = '—'; $('r1Table').innerHTML = ''; $('r1Note').textContent = 'Đề nghị gửi yêu cầu Thông báo sơ bộ giá để được xử lý thủ công.';
+      return;
+    }
+    $('r1Grade').textContent = gradeText[r.grade]; $('r1Grade').style.cssText = gradeStyle(r.grade);
+    $('r1Range').textContent = `${fmtMoney(r.low)} – ${fmtMoney(r.high)}`;
+    $('r1Mid').textContent = `Giá trị điểm giữa ${fmtMoney(r.total)} · biên độ ±${fmt(r.spread * 100, 0)}%`;
+    $('r1Cap').textContent = `${fmtMoney(r.low * 0.70)} – ${fmtMoney(r.low * 0.80)}`;
+    const rows = [
+      ['Đơn giá đất chuẩn khu vực', fmt(r.base, 2) + ' tr/m²'],
+      [`Hệ số chiều sâu (${fmt(f.sau, 1)}m)`, '×' + fmt(r.kd, 3)],
+      [`Hệ số hình dáng (${SHAPE[f.shape].name})`, '×' + fmt(r.ks, 2)],
+      ['Đơn giá đất ước tính', fmt(r.unit, 2) + ' tr/m²'],
+      [`Giá trị đất (${fmt(f.dt, 1)} m²)`, fmtMoney(r.land)],
+      [`Công trình (${CT_NAME[f.ctType]})`, fmtMoney(r.ct)],
+      ['Lọc dữ liệu', `${r.district ? r.district + ' · ' : ''}đường loại ${f.road} · ${zoneText(r)} · ${fmtDist(r.radius)}`],
+      ['Điểm đối chiếu · khoảng cách TB', `${r.comps.length} điểm · ${fmtDist(r.avgD)}`],
+      ['Lọc nhiễu ±25%', r.removed.length ? `loại ${r.removed.length} điểm` : (r.comps.length + r.removed.length >= 4 ? 'không có điểm lệch' : 'chưa đủ 4 điểm')],
+      ['Kiểm soát chênh lệch', `${fmt(r.ctrl * 100, 1)}% · ${ctrlText[r.ctrlState]}`]
+    ];
+    $('r1Table').innerHTML = rows.map(([k, v]) => `<dt class="text-muted">${esc(k)}</dt><dd class="font-semibold num text-right">${esc(v)}</dd>`).join('');
+    const notes = [];
+    if (r.expanded) notes.push(`Đã nới bán kính lên ${fmtDist(r.radius)} do thiếu điểm cùng loại đường.`);
+    if (r.borrowed) notes.push('Có mượn điểm của nhóm đường liền kề (đã quy đổi hệ số đường).');
+    if (r.ctrlState !== 'ok') notes.push('Mức giá chỉ dẫn giữa các điểm chênh lệch lớn, nên gửi yêu cầu Thông báo sơ bộ giá để người xử lý kiểm tra.');
+    if (r.grade === 'C') notes.push('Độ tin cậy thấp: chỉ dùng để sàng lọc ban đầu.');
+    notes.push('Kết quả chỉ mang tính tham khảo thị trường, không có giá trị pháp lý như văn bản định giá chính thức.');
+    $('r1Note').textContent = notes.join(' ');
+    const qr1 = $('qr1Slot'); qr1.innerHTML = '';
+    qr1.dataset.ready = '';
+    if (!opt.silent) box.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+
+  function makeOrderCode() { return 'TBSB-' + String(Math.floor(1000 + Math.random() * 9000)); }
+  function zaloText(f, code) {
+    const p = PKG[f.pkg];
+    const maps = `https://www.google.com/maps/search/?api=1&query=${f.lat},${f.lng}`;
+    const ct = f.ctType === 'none' ? 'Đất trống' : `${CT_NAME[f.ctType]}, sàn ${fmt(f.ctArea, 0)} m², còn ${fmt(f.ctPct, 0)}%`;
+    return [
+      `YÊU CẦU ${code} · ${p.name} (${fmtVnd(p.amt)})`,
+      `Vị trí: ${f.lat.toFixed(6)}, ${f.lng.toFixed(6)}`,
+      `Bản đồ: ${maps}`,
+      `Kích thước: MT ${fmt(f.mt, 1)}m × sâu ${fmt(f.sau, 1)}m = ${fmt(f.dt, 1)} m²`,
+      `Hình dáng: ${SHAPE[f.shape].name} · Đường loại ${f.road} (${ROAD_NAME[f.road]})`,
+      `Hiện trạng nhà: ${ct}`,
+      f.link && !/^\s*-?\d/.test(f.link) ? `Link gốc: ${f.link}` : null,
+      `#SBG|${code}|${f.lat.toFixed(6)}|${f.lng.toFixed(6)}|${f.mt}|${f.sau}|${f.shape}|${f.road}|${f.ctType}|${f.ctArea || 0}|${f.ctPct || 0}|${f.pkg}|${f.zone}`
+    ].filter(Boolean).join('\n');
+  }
+  function runOrder(f) {
+    $('result1').hidden = true;
+    const code = makeOrderCode();
+    const p = PKG[f.pkg];
+    $('order').hidden = false;
+    $('orderLbl').textContent = 'Mã tra cứu';
+    $('orderCode').textContent = code;
+    $('orderPkg').textContent = p.name;
+    $('orderAmt').textContent = fmtVnd(p.amt);
+    renderQR($('qrSlot'), p.amt, code.replace('-', ' '));
+    $('zaloText').value = zaloText(f, code);
+    $('copyMsg').textContent = 'Chuyển khoản đúng nội dung để hệ thống đối soát. Sau đó bấm Copy và gửi qua Zalo cho người xử lý.';
+    store.set('tbsb_lastcase', $('zaloText').value);
+    $('order').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+  function run() {
+    const pk = radioVal('pkg') || '1';
+    if (isMember(pk)) { runMember(pk); return; }
+    const f = readForm();
+    const err = validate(f);
+    $('formMsg').textContent = err;
+    if (err) return;
+    store.set('tbsb_form', { link: $('mapLink').value, lat: $('lat').value, lng: $('lng').value, mt: $('mt').value, sau: $('sau').value, shape: f.shape, road: f.road, zone: f.zone, ctType: f.ctType, ctArea: $('ctArea').value, ctPct: $('ctPct').value });
+    if (f.pkg === '1') runPkg1(f); else runOrder(f);
+  }
+  async function copyText(text, msgEl, okMsg) {
+    try { await navigator.clipboard.writeText(text); msgEl.style.color = 'var(--good)'; msgEl.textContent = okMsg; }
+    catch (e) {
+      const ta = $('zaloText'); ta.focus(); ta.select();
+      let ok = false; try { ok = document.execCommand('copy'); } catch (er) { ok = false; }
+      msgEl.style.color = ok ? 'var(--good)' : 'var(--warn)';
+      msgEl.textContent = ok ? okMsg : 'Trình duyệt chặn copy tự động. Nội dung đã được bôi đen, hãy nhấn giữ và chọn Sao chép.';
+    }
+  }
+
+  /* ---------------- Bản đồ Leaflet ---------------- */
+  const ROAD_COLOR = { 1: '#d92d20', 2: '#f97316', 3: '#2563eb', 4: '#16a34a' };
+  const PRICE_BANDS = [[10, '#16a34a', '< 10 tr'], [25, '#2563eb', '10–25 tr'], [50, '#f97316', '25–50 tr'], [Infinity, '#d92d20', '> 50 tr']];
+  const priceColor = v => PRICE_BANDS.find(b => v < b[0])[1];
+  const ROAD_SHORT = { 1: 'Loại 1 · Đường lớn/QL/TL', 2: 'Loại 2 · Ô tô tránh', 3: 'Loại 3 · Ô tô vào', 4: 'Loại 4 · Ngõ xe máy' };
+  let map = null, tgt = null, pinLayer = null, linkLayer = null, bases = {}, curBase = 'sat', fallback = false;
+  const pinMode = () => radioVal('pinmode') || 'road';
+  function renderLegend() {
+    const items = pinMode() === 'road' ? [1, 2, 3, 4].map(k => [ROAD_COLOR[k], ROAD_SHORT[k]]) : PRICE_BANDS.map(b => [b[1], b[2]]);
+    $('legend').innerHTML = items.map(([c, t]) => `<span class="inline-flex items-center gap-1.5"><span class="w-3 h-3 rounded-full border-2 border-white shadow" style="background:${c}"></span>${esc(t)}</span>`).join('') +
+      `<span class="inline-flex items-center gap-1.5"><span class="w-3 h-3 rotate-45 rounded-sm" style="background:#7c3aed;outline:2px solid #f5c542"></span>Thửa cần tra cứu</span>` +
+      `<span class="inline-flex items-center gap-1.5"><span class="w-5 border-t-2 border-dashed" style="border-color:#7c3aed"></span>Điểm đưa vào công thức</span>`;
+  }
+  function renderPins() {
+    if (!map) return;
+    pinLayer.clearLayers();
+    const mode = pinMode();
+    DATA.forEach(p => {
+      if (!Number.isFinite(p.lat) || !Number.isFinite(p.lng)) return;
+      const col = mode === 'road' ? (ROAD_COLOR[p.road] || '#64748b') : priceColor(p.price);
+      L.circleMarker([p.lat, p.lng], { radius: 8, color: '#ffffff', weight: 2, fillColor: col, fillOpacity: 0.95 })
+        .bindPopup(`<b>${esc(p.area)}</b><br>${esc(ROAD_SHORT[p.road] || 'Loại ' + p.road)}<br>Diện tích mẫu: ${fmt(p.dt, 0)} m² · MT ${fmt(p.mt, 1)}m<br>Đơn giá đất tham chiếu: <b style="color:#8a6327">${fmt(p.price, 1)} tr/m²</b>${p.note ? `<br><span style="color:#5b6680">${esc(p.note)}</span>` : ''}`)
+        .addTo(pinLayer);
+    });
+    renderLegend();
+  }
+  function drawLinks(f, r) {
+    if (!map) return;
+    linkLayer.clearLayers();
+    if (!r || !r.comps || !r.comps.length) return;
+    r.comps.slice().sort((a, b) => a.d - b.d).slice(0, 5).forEach(c => {
+      L.polyline([[f.lat, f.lng], [c.lat, c.lng]], { color: '#7c3aed', weight: 2.5, opacity: 0.9, dashArray: '6 6' }).addTo(linkLayer);
+      L.circleMarker([c.lat, c.lng], { radius: 12, color: '#7c3aed', weight: 2.5, fill: false }).addTo(linkLayer);
+    });
+    const pts = [[f.lat, f.lng], ...r.comps.slice(0, 5).map(c => [c.lat, c.lng])];
+    if (pts.length > 1) map.fitBounds(L.latLngBounds(pts).pad(0.25), { maxZoom: 17, animate: false });
+  }
+  function setBase(k) {
+    curBase = k;
+    Object.values(bases).forEach(l => { if (map.hasLayer(l)) map.removeLayer(l); });
+    bases[(fallback ? 'fb_' : '') + k].addTo(map);
+    document.querySelectorAll('.base-sw button[data-b]').forEach(b => b.setAttribute('aria-pressed', b.dataset.b === k));
+    const fb = document.querySelector('.base-sw button[data-fb]');
+    if (fb) fb.setAttribute('aria-pressed', fallback);
+  }
+  function setTarget(lat, lng, src) {
+    $('lat').value = lat.toFixed(6); $('lng').value = lng.toFixed(6);
+    updateMapsLink();
+    if (tgt) tgt.setLatLng([lat, lng]);
+    const m = $('linkMsg');
+    m.style.color = inRegion(lat, lng) ? 'var(--good)' : 'var(--warn)';
+    m.textContent = (src === 'gps' ? 'Đã lấy vị trí GPS: ' : 'Đã chọn trên bản đồ: ') + lat.toFixed(6) + ', ' + lng.toFixed(6) + (inRegion(lat, lng) ? '' : ' (ngoài Nghệ An – Hà Tĩnh)');
+    recalc();
+  }
+  function recalc() {
+    const f = readForm();
+    if (validate(f)) return;
+    runPkg1(f, { silent: true, keepOrder: true });
+  }
+  function syncTargetFromInputs(pan) {
+    const lat = num($('lat').value), lng = num($('lng').value);
+    if (!map || !Number.isFinite(lat) || !Number.isFinite(lng)) return;
+    tgt.setLatLng([lat, lng]);
+    if (pan) map.setView([lat, lng], Math.max(map.getZoom(), 16), { animate: false });
+  }
+  function initMap() {
+    if (!window.L) { $('mapMsg').style.color = 'var(--warn)'; $('mapMsg').textContent = 'Không tải được thư viện bản đồ. Vẫn có thể dán link Google Maps hoặc nhập tọa độ.'; $('map').parentElement.hidden = true; return; }
+    map = L.map('map', { zoomControl: true, tap: true }).setView([18.6795, 105.6813], 13);
+    // Lớp nền Google theo yêu cầu (gọi tile trực tiếp, không qua API chính thức) + lớp dự phòng Esri / OpenStreetMap
+    const g = lyr => L.tileLayer(`https://mt1.google.com/vt/lyrs=${lyr}&x={x}&y={y}&z={z}`, { maxZoom: 21, attribution: 'Bản đồ © Google' });
+    bases = {
+      sat: g('y'), road: g('m'),
+      fb_sat: L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', { maxZoom: 19, attribution: 'Ảnh © Esri' }),
+      fb_road: L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19, attribution: '© OpenStreetMap' })
+    };
+    let ok = 0, bad = 0;
+    [bases.sat, bases.road].forEach(l => {
+      l.on('tileload', () => { ok++; });
+      l.on('tileerror', () => {
+        bad++;
+        if (!fallback && ok === 0 && bad >= 4) { fallback = true; setBase(curBase); $('mapMsg').style.color = 'var(--warn)'; $('mapMsg').textContent = 'Không tải được nền Google, đã chuyển sang nền dự phòng (Esri / OpenStreetMap).'; }
+      });
+    });
+    const Sw = L.Control.extend({ options: { position: 'topright' }, onAdd() {
+      const d = L.DomUtil.create('div', 'base-sw');
+      d.innerHTML = '<button type="button" data-b="sat" aria-pressed="true">Vệ tinh</button><button type="button" data-b="road" aria-pressed="false">Đường phố</button><button type="button" data-fb="1" aria-pressed="false" title="Nền dự phòng Esri / OpenStreetMap">Dự phòng</button>';
+      L.DomEvent.disableClickPropagation(d);
+      d.querySelectorAll('button[data-b]').forEach(b => b.onclick = () => setBase(b.dataset.b));
+      d.querySelector('button[data-fb]').onclick = () => { fallback = !fallback; setBase(curBase); };
+      return d;
+    } });
+    map.addControl(new Sw());
+    setBase('sat');
+    pinLayer = L.layerGroup().addTo(map);
+    linkLayer = L.layerGroup().addTo(map);
+    const icon = L.divIcon({ className: 'tgt-pin', iconSize: [34, 44], iconAnchor: [17, 42],
+      html: '<svg width="34" height="44" viewBox="0 0 34 44" aria-hidden="true"><path d="M17 2C9 2 3 8 3 16c0 10 14 26 14 26s14-16 14-26C31 8 25 2 17 2z" fill="#7c3aed" stroke="#f5c542" stroke-width="3"/><circle cx="17" cy="16" r="5.5" fill="#f5c542"/></svg>' });
+    const lat0 = num($('lat').value), lng0 = num($('lng').value);
+    tgt = L.marker(Number.isFinite(lat0) ? [lat0, lng0] : [18.6795, 105.6813], { icon, draggable: true, autoPan: true, zIndexOffset: 1000, title: 'Thửa cần tra cứu' }).addTo(map);
+    tgt.on('dragend', () => { const p = tgt.getLatLng(); setTarget(p.lat, p.lng, 'map'); });
+    map.on('click', e => setTarget(e.latlng.lat, e.latlng.lng, 'map'));
+    renderPins();
+  }
+  function useGps() {
+    const m = $('linkMsg');
+    if (!navigator.geolocation) { m.style.color = 'var(--bad)'; m.textContent = 'Thiết bị không hỗ trợ định vị.'; return; }
+    m.style.color = 'var(--muted)'; m.textContent = 'Đang lấy vị trí GPS…';
+    navigator.geolocation.getCurrentPosition(pos => {
+      setTarget(pos.coords.latitude, pos.coords.longitude, 'gps');
+      if (map) map.setView([pos.coords.latitude, pos.coords.longitude], 18, { animate: false });
+      m.textContent += ` · sai số ±${Math.round(pos.coords.accuracy)} m`;
+    }, err => {
+      m.style.color = 'var(--bad)';
+      m.textContent = err.code === 1 ? 'Chưa cấp quyền vị trí. Bật quyền định vị cho trình duyệt rồi thử lại.' : 'Không lấy được vị trí GPS. Ra chỗ thoáng hoặc chọn trên bản đồ.';
+    }, { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 });
+  }
+
+  /* ---------------- TAB 2 ---------------- */
+  function caseFromLine(text) {
+    const m = String(text).match(/#SBG\|([^\n]+)/);
+    if (!m) return null;
+    const p = m[1].trim().split('|');
+    if (p.length < 8) return null;
+    return { code: p[0], lat: num(p[1]), lng: num(p[2]), mt: num(p[3]), sau: num(p[4]), shape: p[5], road: parseInt(p[6], 10), ctType: p[7], ctArea: num(p[8]), ctPct: num(p[9]), pkg: p[10] || '2', zone: p[11] || 'auto' };
+  }
+  function fillCase(c) {
+    $('c_code').value = c.code || makeOrderCode();
+    $('c_lat').value = Number.isFinite(c.lat) ? c.lat.toFixed(6) : '';
+    $('c_lng').value = Number.isFinite(c.lng) ? c.lng.toFixed(6) : '';
+    $('c_mt').value = c.mt || ''; $('c_sau').value = c.sau || '';
+    $('c_shape').value = SHAPE[c.shape] ? c.shape : 'VU';
+    $('c_shapeK').value = fmt(SHAPE[$('c_shape').value].k, 2);
+    $('c_zone').value = ['urban', 'rural'].includes(c.zone) ? c.zone : 'auto';
+    updateShapeHint();
+    if (c.ctType && c.ctType !== 'none') { $('x_type').value = c.ctType; $('x_floor').value = c.ctArea || ''; $('x_mode').value = 'pct'; $('x_pct').value = Number.isFinite(c.ctPct) ? 100 - c.ctPct : 0; syncXUnit(); }
+    $('c_road').value = String(c.road >= 1 && c.road <= 4 ? c.road : 2);
+    const ct = ctValue(c.ctType, c.ctArea, c.ctPct);
+    $('c_area').value = '';
+    $('f_ct').value = ct ? fmt(ct, 0).replace(/\./g, '') : '0';
+    $('f_ct').dataset.desc = c.ctType && c.ctType !== 'none' ? `${CT_NAME[c.ctType]}, sàn ${fmt(c.ctArea, 0)} m², còn ${fmt(c.ctPct, 0)}%` : 'Đất trống';
+    $('f_unit').value = '';
+    refreshTab2(true);
+  }
+  function readCase() {
+    return { code: $('c_code').value.trim() || 'TBSB-0000', lat: num($('c_lat').value), lng: num($('c_lng').value), mt: num($('c_mt').value), sau: num($('c_sau').value),
+      shape: $('c_shape').value, road: parseInt($('c_road').value, 10), zone: $('c_zone').value, shapeK: caseShapeK() };
+  }
+  function caseShapeK() {
+    const sh = $('c_shape').value, k = num($('c_shapeK').value);
+    return clamp(k, SHAPE_RANGE[sh], SHAPE[sh].k);
+  }
+  function updateShapeHint() {
+    const sh = $('c_shape').value, [a, b] = SHAPE_RANGE[sh], k = num($('c_shapeK').value);
+    const out = Number.isFinite(k) && (k < a || k > b);
+    $('c_shapeHint').style.color = out ? 'var(--bad)' : 'var(--muted)';
+    $('c_shapeHint').textContent = a === b ? 'Thửa vuông vắn: hệ số cố định 1,00.' : `Khung cho phép ${fmt(a, 2)}–${fmt(b, 2)}${out ? `; đang tính theo ${fmt(caseShapeK(), 2)}` : ''}.`;
+  }
+  let lastEst = null;
+  function refreshTab2(setUnit) {
+    const c = readCase();
+    const list = $('compList'), svg = $('compMap'), sug = $('suggestBox');
+    if (!Number.isFinite(c.lat) || !Number.isFinite(c.lng)) {
+      list.innerHTML = '<li class="text-sm text-muted">Nhập hoặc dán thông tin ca để xem điểm so sánh.</li>';
+      svg.innerHTML = ''; sug.textContent = ''; lastEst = null; renderTicket(); return;
+    }
+    const ok = c.mt > 0 && c.sau > 0;
+    const est = estimate({ lat: c.lat, lng: c.lng, road: c.road, zone: c.zone, sau: ok ? c.sau : D0, dt: ok ? c.mt * c.sau : 0, shape: c.shape, shapeK: c.shapeK, ctValue: 0 });
+    lastEst = ok && est.status === 'OK' ? est : null;
+    const used = est.comps || [];
+    const pill = (k, v, col) => `<div class="rounded-lg px-2 py-1.5 border border-line"><div class="text-muted">${k}</div><div class="font-semibold num" ${col ? `style="color:${col}"` : ''}>${v}</div></div>`;
+    $('pipeBox').innerHTML = [
+      pill('1 · Loại đường', `Loại ${c.road} · ${est.sameCount} điểm${est.district ? ' tại ' + esc(est.district) : ''}`),
+      pill('2 · Bán kính', `${fmtDist(est.radius)} · ${zoneText(est)}${est.expanded ? ' · đã nới' : ''}`, est.expanded ? 'var(--warn)' : ''),
+      pill('3 · Lọc nhiễu ±25%', est.removed.length ? `Loại ${est.removed.length} điểm` : 'Không loại', est.removed.length ? 'var(--warn)' : ''),
+      pill('4 · Kiểm soát', est.status === 'OK' ? `${fmt(est.ctrl * 100, 1)}% · ${ctrlText[est.ctrlState]}` : '—', est.status !== 'OK' ? '' : est.ctrlState === 'ok' ? 'var(--good)' : est.ctrlState === 'warn' ? 'var(--warn)' : 'var(--bad)')
+    ].join('');
+    const card = (p, i, out) => {
+      const col = out ? 'var(--bad)' : p.conv !== 1 ? 'var(--warn)' : 'var(--teal)';
+      const devTxt = out ? `lệch ${fmtPct(p.std / est.med - 1, 0)} so với trung vị · đã loại` : (Number.isFinite(p.dev) ? `chênh ${fmtPct(p.dev, 1)} · trọng số ${fmt(p.w * 100, 0)}%` : '');
+      return `<li class="rounded-xl border p-3 flex gap-3 items-start" style="border-color:${col};${out ? 'opacity:.6' : ''}">
+        <span class="shrink-0 w-7 h-7 rounded-full grid place-items-center text-xs font-bold" style="background:${col};color:#fff">${out ? '×' : i + 1}</span>
+        <div class="min-w-0 flex-1">
+          <div class="flex justify-between gap-2"><span class="font-semibold text-sm">${esc(p.area)}</span><span class="font-mono text-sm num whitespace-nowrap">${fmtDist(p.d)}</span></div>
+          <div class="text-xs text-muted mt-0.5">Đường loại ${p.road}${p.conv !== 1 ? ` (quy đổi ×${fmt(p.conv, 2)})` : ''} · ${fmt(p.dt, 0)} m² · MT ${fmt(p.mt, 1)}m · sâu ${fmt(p.depth, 1)}m</div>
+          <div class="flex justify-between gap-2 mt-1"><span class="text-xs">${esc(p.note)}</span><span class="font-bold num whitespace-nowrap" style="color: var(--gold)">${fmt(p.price, 1)} → ${fmt(p.std, 1)} tr/m²</span></div>
+          <div class="text-[11px] mt-0.5" style="color:${out ? 'var(--bad)' : 'var(--muted)'}">${devTxt}</div>
+        </div></li>`;
+    };
+    list.innerHTML = used.map((p, i) => card(p, i, false)).join('') + est.removed.map((p, i) => card(p, i, true)).join('')
+      || `<li class="text-sm text-muted">Không có điểm đối chiếu trong bán kính ${fmtDist(est.radius)}. Tự chốt đơn giá theo khảo sát.</li>`;
+    drawMap(c, used.concat(est.removed));
+    if (lastEst) {
+      sug.innerHTML = `Gợi ý của hệ thống: <b class="num">${fmt(lastEst.unit, 2)} tr/m²</b> = chuẩn ${fmt(lastEst.base, 2)} × sâu ${fmt(lastEst.kd, 3)} × hình ${fmt(lastEst.ks, 2)} · ${gradeText[lastEst.grade]}${lastEst.borrowed ? ' · có mượn nhóm đường liền kề' : ''}. <button type="button" id="useSuggest" class="font-semibold underline" style="color: var(--teal)">Dùng giá gợi ý</button>`;
+      $('useSuggest').onclick = () => { $('f_unit').value = fmt(lastEst.unit, 2).replace(/\./g, ''); renderTicket(); };
+      if (setUnit || !$('f_unit').value) $('f_unit').value = fmt(lastEst.unit, 2).replace(/\./g, '');
+      if (!$('c_area').value && used[0]) $('c_area').value = 'Gần ' + used[0].area;
+    } else {
+      sug.textContent = ok ? 'Chưa đủ điểm để gợi ý tự động. Hãy tự chốt đơn giá.' : 'Nhập mặt tiền và chiều sâu để có giá gợi ý.';
+    }
+    renderMethods();
+    renderTicket();
+  }
+  function drawMap(c, pts) {
+    const svg = $('compMap');
+    const W = 320, H = 180, pad = 22;
+    const kx = Math.cos(rad(c.lat)) * 111320, ky = 110540;
+    const xy = pts.map(p => ({ x: (p.lng - c.lng) * kx, y: (p.lat - c.lat) * ky }));
+    const maxR = Math.max(200, ...xy.map(q => Math.hypot(q.x, q.y)));
+    const s = Math.min((W / 2 - pad) / maxR, (H / 2 - pad) / maxR);
+    const cx = W / 2, cy = H / 2;
+    const ring = Math.max(100, Math.pow(10, Math.floor(Math.log10(maxR))) * (maxR / Math.pow(10, Math.floor(Math.log10(maxR))) >= 5 ? 5 : 1));
+    let out = `<circle cx="${cx}" cy="${cy}" r="${ring * s}" fill="none" stroke="var(--line)" stroke-dasharray="3 3"/>
+      <text x="${cx + ring * s * 0.72}" y="${cy - ring * s * 0.72 - 4}" font-size="9" fill="var(--muted)">${fmtDist(ring)}</text>`;
+    pts.forEach((p, i) => {
+      const q = xy[i], x = cx + q.x * s, y = cy - q.y * s, same = p.conv === 1 && !p.out;
+      out += `<line x1="${cx}" y1="${cy}" x2="${x}" y2="${y}" stroke="var(--line)"/>
+        <circle cx="${x}" cy="${y}" r="9" fill="${same ? 'var(--teal)' : 'var(--surface)'}" stroke="${same ? 'var(--teal)' : 'var(--muted)'}"/>
+        <text x="${x}" y="${y + 3.5}" text-anchor="middle" font-size="10" font-weight="700" fill="${same ? '#fff' : 'var(--ink)'}">${i + 1}</text>`;
+    });
+    out += `<path d="M${cx} ${cy - 10} l7 10 -7 10 -7 -10z" fill="var(--gold)" stroke="var(--navy)" stroke-width="1"/>
+      <text x="${W - 8}" y="14" text-anchor="end" font-size="9" fill="var(--muted)">Bắc ↑</text>`;
+    svg.innerHTML = out;
+  }
+
+  let cross = { inc: null, res: null };
+  function syncXUnit() { $('x_unit').value = fmt(settings[$('x_type').value], 2).replace(/\./g, ''); }
+  function readEx() {
+    const mode = $('x_mode').value;
+    const parts = [...document.querySelectorAll('#x_parts [data-i]')].map(r => ({ T: num(r.querySelector('.pt').value) || 0, Q: Math.min(100, Math.max(0, num(r.querySelector('.pq').value) || 0)) / 100 }));
+    const dep = depreciation(mode, { eff: num($('x_eff').value), econ: num($('x_econ').value), parts, pct: (num($('x_pct').value) || 0) / 100 });
+    const type = $('x_type').value, unit = num($('x_unit').value), floor = num($('x_floor').value);
+    return { mode, dep, type, unit, floor, V: buildValue(floor, unit, dep) };
+  }
+  function renderMethods() {
+    const tab = radioVal('mtab') || 'ex';
+    $('m_ex').hidden = tab !== 'ex'; $('m_inc').hidden = tab !== 'inc'; $('m_res').hidden = tab !== 'res';
+    $('x_age').hidden = $('x_mode').value !== 'age'; $('x_part').hidden = $('x_mode').value !== 'part'; $('x_pctWrap').hidden = $('x_mode').value !== 'pct';
+    // Chiết trừ
+    const e = readEx(), [ua, ub] = BUILD_RANGE[e.type];
+    const outU = Number.isFinite(e.unit) && (e.unit < ua || e.unit > ub);
+    $('x_unitHint').style.color = outU ? 'var(--bad)' : 'var(--muted)';
+    $('x_unitHint').textContent = `Khung tham chiếu ${fmt(ua, 1)}–${fmt(ub, 1)} tr/m²${outU ? ': đơn giá đang nằm ngoài khung' : ''}.`;
+    $('x_out').innerHTML = Number.isFinite(e.V) ? `Tỷ lệ hao mòn <b class="num">${fmt(e.dep * 100, 1)}%</b> · chất lượng còn lại ${fmt((1 - e.dep) * 100, 1)}%<br>V công trình = ${fmt(e.floor, 0)} m² × ${fmt(e.unit, 2)} × ${fmt(1 - e.dep, 3)} = <b class="num">${fmtMoney(e.V)}</b>` : 'Nhập đủ đơn giá, S sàn và thông số hao mòn.';
+    const price = num($('x_price').value), la = num($('x_land').value), nonre = num($('x_nonre').value) || 0;
+    if (Number.isFinite(e.V) && price > 0 && la > 0) {
+      const land = price - nonre - e.V, u = land / la, share = e.V / price;
+      const vs = lastEst ? ` · so với đơn giá chuẩn khu vực ${fmt(lastEst.base, 2)}: ${fmtPct(u / lastEst.base - 1, 1)}` : '';
+      $('x_landOut').innerHTML = `Giá trị đất = ${fmtMoney(price)} − ${fmtMoney(nonre)} − ${fmtMoney(e.V)} = <b class="num">${fmtMoney(land)}</b><br>Đơn giá đất thuần <b class="num">${fmt(u, 2)} tr/m²</b>${vs}` +
+        (share > 0.7 ? '<br><span style="color: var(--bad)">Công trình chiếm trên 70% giá giao dịch: đơn giá đất chiết ra kém tin cậy.</span>' : '') +
+        (land <= 0 ? '<br><span style="color: var(--bad)">Giá trị đất âm: kiểm tra lại giá giao dịch hoặc công trình.</span>' : '');
+    } else $('x_landOut').textContent = 'Nhập giá giao dịch và diện tích thửa.';
+    // Vốn hóa
+    const ic = directCap({ rent: num($('i_rent').value), vac: (num($('i_vac').value) || 0) / 100, bad: (num($('i_bad').value) || 0) / 100, opex: num($('i_opex').value) || 0, R: (num($('i_r').value) || 0) / 100 });
+    const Rv = num($('i_r').value);
+    const base = ticketTotal();
+    const devI = Number.isFinite(base) && base > 0 ? ic.V / base - 1 : NaN;
+    $('i_out').innerHTML = Number.isFinite(ic.V) ? `Doanh thu năm ${fmtMoney(ic.PGI)} → thực thu ${fmtMoney(ic.EGI)} → I = <b class="num">${fmtMoney(ic.I)}</b>/năm<br>V = I / ${fmt(Rv, 1)}% = <b class="num">${fmtMoney(ic.V)}</b>` +
+      (Number.isFinite(devI) ? `<br>So với giá trị theo so sánh ${fmtMoney(base)}: <b style="color:${Math.abs(devI) > CROSS_MAX ? 'var(--bad)' : 'var(--good)'}">${fmtPct(devI, 1)}</b>${Math.abs(devI) > CROSS_MAX ? ' · lệch quá ±20%, cần người xử lý xem lại' : ''}` : '') +
+      (Rv < 10 || Rv > 14 ? '<br><span style="color: var(--warn)">R ngoài khung phổ biến 10–14%/năm.</span>' : '') : 'Nhập đủ giá thuê và R.';
+    cross.inc = $('i_on').checked && Number.isFinite(ic.V) ? { V: ic.V, dev: devI, R: Rv } : null;
+    // Thặng dư
+    const g = id => num($(id).value) || 0;
+    const rs = residual({ lots: g('t_lots'), sell: g('t_sell'), demo: g('t_demo'), infra: g('t_infra'), fee: g('t_fee'), mgmt: g('t_mgmt'), int: g('t_int'), pro: g('t_pro') / 100, n: g('t_n'), r: g('t_r') / 100 });
+    const ta = g('t_area');
+    const devR = Number.isFinite(base) && base > 0 ? rs.V / base - 1 : NaN;
+    $('t_out').innerHTML = `DT = ${fmtMoney(rs.DT)} · CP = ${fmtMoney(rs.base)} + lãi vay ${fmtMoney(g('t_int'))} + lợi nhuận ${fmtMoney(rs.profit)} = <b class="num">${fmtMoney(rs.CP)}</b><br>` +
+      `V một kỳ = <b class="num">${fmtMoney(rs.Vstatic)}</b>${rs.n > 1 || g('t_r') > 0 ? ` · V chiết khấu ${rs.n} năm, r = ${fmt(g('t_r'), 1)}%: <b class="num">${fmtMoney(rs.V)}</b>` : ''}` +
+      (ta > 0 ? `<br>Đơn giá khu đất gốc ≈ <b class="num">${fmt(rs.V / ta, 2)} tr/m²</b>` : '') +
+      (Number.isFinite(devR) ? `<br>So với giá trị theo so sánh ${fmtMoney(base)}: <b style="color:${Math.abs(devR) > CROSS_MAX ? 'var(--bad)' : 'var(--good)'}">${fmtPct(devR, 1)}</b>` : '') +
+      (rs.V <= 0 ? '<br><span style="color: var(--bad)">Giá trị âm: phương án phát triển không khả thi với giả định hiện tại.</span>' : '');
+    cross.res = $('t_on').checked ? { V: rs.V, dev: devR } : null;
+  }
+  function ticketTotal() {
+    const c = readCase(), unit = num($('f_unit').value), ct = num($('f_ct').value) || 0;
+    const cut = $('f_qh').value === 'part' ? Math.max(0, num($('f_cut').value) || 0) : 0;
+    return (c.mt > 0 && c.sau > 0 && unit > 0) ? unit * Math.max(0, c.mt * c.sau - cut) + ct : NaN;
+  }
+  function buildParts() {
+    $('x_parts').innerHTML = PARTS.map(([n, t], i) => `<div data-i="${i}" class="grid grid-cols-[1fr_70px_80px] gap-2 items-center">
+      <span class="text-sm">${n}</span><input class="field num pt !py-2 text-right" inputmode="decimal" value="${t}" aria-label="Tỷ trọng ${n}"><input class="field num pq !py-2 text-right" inputmode="decimal" value="80" aria-label="Chất lượng còn lại ${n}"></div>`).join('');
+  }
+
+  function renderTicket() {
+    const c = readCase();
+    const unit = num($('f_unit').value);
+    const ct = num($('f_ct').value) || 0;
+    const ratio = Math.min(100, Math.max(0, num($('f_ratio').value) || 0));
+    const band = Math.max(0, num($('f_band').value) || 0) / 100;
+    const qh = QH[$('f_qh').value];
+    const cut = $('f_qh').value === 'part' ? Math.max(0, num($('f_cut').value) || 0) : 0;
+    const dt = (c.mt > 0 && c.sau > 0) ? c.mt * c.sau : NaN;
+    const dtUse = Math.max(0, dt - cut);
+    const land = unit * dtUse;
+    const total = land + ct;
+    const low = total * (1 - band), high = total * (1 + band);
+    const capRef = low * ratio / 100;
+    const code = c.code || 'TBSB-0000';
+    const ctDesc = $('f_ct').dataset.desc || (ct > 0 ? 'Theo ghi nhận của người xử lý' : 'Đất trống');
+    const factors = [];
+    if (lastEst) {
+      factors.push(['Đơn giá chuẩn khu vực (nội suy ' + lastEst.comps.length + ' điểm)', fmt(lastEst.base, 2) + ' tr/m²', '#14213d']);
+      factors.push([`Lọc: đường loại ${c.road} · ${fmtDist(lastEst.radius)} · loại nhiễu ${lastEst.removed.length} điểm`, ({ ok: 'Đạt', warn: 'Cảnh báo', bad: 'Không đạt' })[lastEst.ctrlState] + ' ' + fmt(lastEst.ctrl * 100, 1) + '%', lastEst.ctrlState === 'ok' ? '#12805c' : lastEst.ctrlState === 'warn' ? '#9a5b00' : '#b42318']);
+      const pd = (lastEst.kd - 1) * 100, ps = (lastEst.ks - 1) * 100;
+      factors.push([`Chiều sâu ${fmt(c.sau, 1)}m (phần vượt ${D0}m tính ${fmt(K_DEEP * 100, 0)}%)`, (pd >= 0 ? '+' : '') + fmt(pd, 1) + '%', pd < 0 ? '#b42318' : '#12805c']);
+      factors.push([`Hình dáng: ${SHAPE[c.shape].name} (×${fmt(lastEst.ks, 2)})`, (ps >= 0 ? '+' : '') + fmt(ps, 1) + '%', ps < 0 ? '#b42318' : '#12805c']);
+      if (Number.isFinite(unit) && lastEst.unit > 0) {
+        const adj = (unit / lastEst.unit - 1) * 100;
+        if (Math.abs(adj) >= 0.05) factors.push(['Điều chỉnh theo khảo sát', (adj >= 0 ? '+' : '') + fmt(adj, 1) + '%', adj < 0 ? '#b42318' : '#12805c']);
+      }
+    }
+    if (cut > 0) factors.push(['Trừ diện tích hành lang', '−' + fmt(cut, 1) + ' m²', '#b42318']);
+    const xcol = d => !Number.isFinite(d) ? '#14213d' : Math.abs(d) > CROSS_MAX ? '#b42318' : '#12805c';
+    if (cross.inc) factors.push([`Đối chiếu vốn hóa thu nhập (R ${fmt(cross.inc.R, 1)}%): ${fmtMoney(cross.inc.V)}`, Number.isFinite(cross.inc.dev) ? fmtPct(cross.inc.dev, 1) : '—', xcol(cross.inc.dev)]);
+    if (cross.res) factors.push([`Đối chiếu thặng dư: ${fmtMoney(cross.res.V)}`, Number.isFinite(cross.res.dev) ? fmtPct(cross.res.dev, 1) : '—', xcol(cross.res.dev)]);
+    const note = $('f_note').value.trim();
+    const row = (k, v) => `<tr><td style="padding:3px 0;color:#5b6680;font-size:12px">${k}</td><td style="padding:3px 0;text-align:right;font-weight:600;font-size:12.5px">${v}</td></tr>`;
+    $('ticket').innerHTML = `
+      <div style="background:#14213d;color:#fff;padding:18px 20px 16px">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px">
+          <div>
+            <div style="font-size:9.5px;letter-spacing:.12em;color:#d6a75a;font-weight:700;line-height:1.5">HỆ THỐNG TRA CỨU &amp; THÔNG BÁO<br>SƠ BỘ GIÁ BĐS NGHỆ AN – HÀ TĨNH</div>
+            <div style="font-size:24px;font-weight:800;line-height:1.2;margin-top:6px">THÔNG BÁO<br>SƠ BỘ GIÁ</div>
+          </div>
+          <div style="text-align:right">
+            <div class="tk-num" style="font-size:14px;font-weight:700;color:#d6a75a">${esc(code)}</div>
+            <div style="font-size:11px;opacity:.8;margin-top:2px">Ngày phát hành ${today()}</div>
+          </div>
+        </div>
+      </div>
+      <div style="height:4px;background:linear-gradient(90deg,#b0843c,#d6a75a,#0f7c7a)"></div>
+      <div style="padding:16px 20px 4px">
+        <div style="font-size:10.5px;letter-spacing:.14em;color:#0f7c7a;font-weight:700">VỊ TRÍ & THÔNG SỐ THỬA ĐẤT</div>
+        <table style="width:100%;border-collapse:collapse;margin-top:6px">
+          ${row('Khu vực', esc($('c_area').value || '—'))}
+          ${row('Tọa độ', `<span class="tk-num" style="font-size:11.5px">${Number.isFinite(c.lat) ? c.lat.toFixed(5) + ', ' + c.lng.toFixed(5) : '—'}</span>`)}
+          ${row('Phân loại đường', `Loại ${c.road} · ${ROAD_NAME[c.road]}`)}
+          ${row('Kích thước', Number.isFinite(dt) ? `${fmt(c.mt, 1)}m × ${fmt(c.sau, 1)}m = ${fmt(dt, 1)} m²` : '—')}
+          ${row('Hình dáng', SHAPE[c.shape].name)}
+          ${row('Công trình', esc(ctDesc))}
+        </table>
+      </div>
+      <div style="margin:12px 20px;border:1.5px solid #b0843c;border-radius:12px;overflow:hidden">
+        <div style="background:#fbf5ea;padding:12px 14px">
+          <div style="font-size:10.5px;letter-spacing:.14em;color:#8a6327;font-weight:700">KHUNG GIÁ TRỊ THAM CHIẾU THỊ TRƯỜNG</div>
+          <div class="tk-num" style="font-size:22px;font-weight:700;color:#14213d;margin-top:4px">${Number.isFinite(total) ? fmtMoney(low) + ' – ' + fmtMoney(high) : '—'}</div>
+          <div style="font-size:11.5px;color:#5b6680;margin-top:2px">Đất ${Number.isFinite(land) ? fmtMoney(land) : '—'} (${Number.isFinite(unit) ? fmt(unit, 2) : '—'} tr/m² × ${Number.isFinite(dtUse) ? fmt(dtUse, 1) : '—'} m²) + Công trình ${fmtMoney(ct)} · ±${fmt(band * 100, 0)}%</div>
+        </div>
+        <div style="background:#14213d;color:#fff;padding:10px 14px;display:flex;justify-content:space-between;align-items:center;gap:8px">
+          <div style="font-size:11.5px;opacity:.85">Mức tham chiếu vốn dự kiến<br><span style="font-size:10.5px;opacity:.8">${fmt(ratio, 0)}% × mức thấp của khung</span></div>
+          <div class="tk-num" style="font-size:18px;font-weight:700;color:#d6a75a">${Number.isFinite(capRef) ? fmtMoney(capRef) : '—'}</div>
+        </div>
+      </div>
+      <div style="padding:2px 20px 0">
+        <div style="font-size:10.5px;letter-spacing:.14em;color:#0f7c7a;font-weight:700">THÔNG TIN QUY HOẠCH THAM KHẢO</div>
+        <div style="margin-top:6px;padding:8px 10px;border-radius:8px;background:${qh.bg};color:${qh.color};font-weight:700;font-size:12.5px">● ${esc(qh.text)}</div>
+      </div>
+      ${factors.length ? `<div style="padding:12px 20px 0">
+        <div style="font-size:10.5px;letter-spacing:.14em;color:#0f7c7a;font-weight:700">PHÂN TÍCH HỆ SỐ CỘNG / TRỪ</div>
+        <table style="width:100%;border-collapse:collapse;margin-top:4px">
+          ${factors.map(([k, v, col]) => `<tr><td style="padding:4px 0;border-bottom:1px dashed #d9dfea;font-size:12px;color:#14213d">${esc(k)}</td><td class="tk-num" style="padding:4px 0;border-bottom:1px dashed #d9dfea;text-align:right;font-size:12px;font-weight:700;color:${col}">${esc(v)}</td></tr>`).join('')}
+        </table></div>` : ''}
+      ${note ? `<div style="padding:12px 20px 0"><div style="font-size:10.5px;letter-spacing:.14em;color:#0f7c7a;font-weight:700">GHI CHÚ ĐẶC ĐIỂM</div><div style="font-size:12.5px;line-height:1.5;margin-top:4px;white-space:pre-wrap">${esc(note)}</div></div>` : ''}
+      <div style="margin-top:16px;padding:12px 20px 16px;background:#f3f5f9;border-top:1px solid #d9dfea">
+        <div style="font-size:10px;line-height:1.5;color:#5b6680">
+          <b style="color:#14213d">Khuyến cáo miễn trừ trách nhiệm:</b> Thông báo này chỉ mang tính tham khảo thị trường, được lập từ dữ liệu khảo sát thị trường độc lập và thông tin do người yêu cầu cung cấp, chưa đối chiếu giấy chứng nhận quyền sử dụng đất và hiện trạng thực tế. Tài liệu không phải văn bản định giá chính thức, không có giá trị pháp lý để làm căn cứ giao dịch, công chứng hay cam kết khoản vốn. Hiệu lực tham khảo 30 ngày kể từ ngày phát hành.
+        </div>
+      </div>`;
+  }
+
+  async function exportTicket() {
+    const msg = $('exportMsg');
+    const c = readCase();
+    if (!Number.isFinite(c.lat) || !(num($('f_unit').value) > 0)) { msg.style.color = 'var(--bad)'; msg.textContent = 'Cần có tọa độ và đơn giá đất chốt trước khi xuất ảnh.'; return; }
+    msg.style.color = 'var(--muted)'; msg.textContent = 'Đang tạo ảnh…';
+    try {
+      if (document.fonts && document.fonts.ready) await document.fonts.ready;
+      const el = $('ticket');
+      const canvas = await html2canvas(el, { scale: 2, backgroundColor: '#ffffff', useCORS: true, logging: false, width: el.offsetWidth, height: el.offsetHeight, windowWidth: Math.max(document.documentElement.clientWidth, 480) });
+      const url = canvas.toDataURL('image/png');
+      $('imgOut').src = url;
+      $('imgModal').hidden = false;
+      lastPng = { url, canvas, name: (c.code || 'TBSB') + '.png' };
+      tryDownload();
+      msg.style.color = 'var(--good)'; msg.textContent = 'Đã tạo ảnh 840px chiều ngang (2x).';
+    } catch (e) {
+      msg.style.color = 'var(--bad)'; msg.textContent = 'Không tạo được ảnh: ' + e.message;
+    }
+  }
+  let lastPng = null;
+  const downloadsP = (window.claude && typeof window.claude.use === 'function') ? window.claude.use('downloads').catch(() => null) : Promise.resolve(null);
+  async function tryDownload() {
+    if (!lastPng) return;
+    const inViewer = !!(window.claude && typeof window.claude.use === 'function');
+    if (inViewer) {
+      const dl = await downloadsP;
+      if (!dl) return;                                  // không hỗ trợ: dùng nhấn giữ ảnh
+      try {
+        const blob = await new Promise(r => lastPng.canvas.toBlob(r, 'image/png'));
+        await dl.save({ filename: lastPng.name, data: blob });
+        $('exportMsg').style.color = 'var(--good)'; $('exportMsg').textContent = 'Đã lưu ' + lastPng.name + '.';
+      } catch (e) {
+        if (e && e.code === 'declined') return;
+        $('exportMsg').style.color = 'var(--warn)'; $('exportMsg').textContent = 'Không lưu được file ở đây. Nhấn giữ vào ảnh để lưu.';
+      }
+      return;
+    }
+    try { const a = document.createElement('a'); a.href = lastPng.url; a.download = lastPng.name; document.body.appendChild(a); a.click(); a.remove(); } catch (e) { /* bị chặn tải */ }
+  }
+  async function shareImg() {
+    if (!lastPng) return;
+    try {
+      const blob = await new Promise(r => lastPng.canvas.toBlob(r, 'image/png'));
+      const file = new File([blob], lastPng.name, { type: 'image/png' });
+      if (navigator.canShare && navigator.canShare({ files: [file] })) { await navigator.share({ files: [file], title: 'Thông báo sơ bộ giá' }); return; }
+      throw new Error('unsupported');
+    } catch (e) {
+      if (e && e.name === 'AbortError') return;
+      $('exportMsg').style.color = 'var(--warn)';
+      $('exportMsg').textContent = 'Thiết bị hoặc trình xem này không hỗ trợ chia sẻ file. Nhấn giữ vào ảnh để lưu rồi gửi Zalo.';
+    }
+  }
+
+  /* ---------------- Cài đặt ---------------- */
+  function loadSettingsForm() {
+    $('s_recv').value = settings.bin; $('s_acc').value = settings.acc; $('s_name').value = settings.name;
+    $('s_c4').value = settings.c4; $('s_t23').value = settings.t23; $('s_t4').value = settings.t4; $('s_csv').value = settings.csv || '';
+    $('s_rU').value = settings.rU; $('s_rR').value = settings.rR; $('s_kDeep').value = settings.kDeep;
+    $('s_kNO').value = settings.kNO; $('s_kTH').value = settings.kTH; $('s_kLD').value = settings.kLD;
+  }
+  function saveSettings() {
+    settings = normSettings({
+      v: 2, rU: num($('s_rU').value), rR: num($('s_rR').value), kDeep: num($('s_kDeep').value),
+      kNO: num($('s_kNO').value), kTH: num($('s_kTH').value), kLD: num($('s_kLD').value),
+      bin: $('s_recv').value, acc: $('s_acc').value.replace(/\D/g, '') || DEFAULT_SETTINGS.acc,
+      name: ($('s_name').value || DEFAULT_SETTINGS.name).normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/đ/g, 'd').replace(/Đ/g, 'D').toUpperCase(),
+      c4: num($('s_c4').value) || DEFAULT_SETTINGS.c4, t23: num($('s_t23').value) || DEFAULT_SETTINGS.t23, t4: num($('s_t4').value) || DEFAULT_SETTINGS.t4,
+      csv: $('s_csv').value.trim()
+    });
+    store.set('tbsb_settings', settings);
+    applyParams(); updateCt(); updateDims(); syncXUnit(); $('c_shapeK').value = fmt(SHAPE[$('c_shape').value].k, 2); updateShapeHint();
+    if (!$('result1').hidden) run(); refreshTab2(false);
+    $('settings').hidden = true;
+    if (!$('order').hidden) run();
+  }
+
+  /* ---------------- Khởi tạo ---------------- */
+  function init() {
+    applyParams(); buildParts(); syncXUnit();
+    loadSettingsForm();
+    const cached = store.get('tbsb_cache', null);
+    if (settings.csv && Array.isArray(cached) && cached.length) applyData(cached, 'sheet');
+
+    const saved = store.get('tbsb_form', null);
+    const f = saved || { link: 'https://www.google.com/maps/@18.6702,105.6985,17z', lat: '', lng: '', mt: '6', sau: '32', shape: 'VU', road: 2, zone: 'auto', ctType: 'c4', ctArea: '70', ctPct: '50' };
+    $('mapLink').value = f.link || ''; $('lat').value = f.lat || ''; $('lng').value = f.lng || '';
+    $('mt').value = f.mt; $('sau').value = f.sau; setRadio('shape', f.shape); setRadio('road', f.road); setRadio('zone', f.zone || 'auto');
+    $('ctType').value = f.ctType; $('ctArea').value = f.ctArea; $('ctPct').value = f.ctPct;
+    if (!f.lat) onLink(); else updateMapsLink();
+    updateDims(); updateCt(); updateRunLabel();
+
+    initMap();
+    $('gpsBtn').addEventListener('click', useGps);
+    document.querySelectorAll('input[name="pinmode"]').forEach(r => r.addEventListener('change', renderPins));
+    ['lat', 'lng'].forEach(id => $(id).addEventListener('change', () => { syncTargetFromInputs(true); recalc(); }));
+    const ph = store.get('tbsb_phone', ''); if (ph) $('phone').value = ph;
+    $('mapLink').addEventListener('input', onLink);
+    $('mapLink').addEventListener('paste', () => setTimeout(onLink, 0));
+    ['lat', 'lng'].forEach(id => $(id).addEventListener('input', updateMapsLink));
+    ['mt', 'sau'].forEach(id => $(id).addEventListener('input', updateDims));
+    $('ctType').addEventListener('change', updateCt);
+    document.querySelectorAll('input[name="pkg"]').forEach(r => r.addEventListener('change', updateRunLabel));
+    $('runBtn').addEventListener('click', run);
+    $('upsellBtn').addEventListener('click', () => { setRadio('pkg', '2'); updateRunLabel(); run(); });
+    $('copyZalo').addEventListener('click', () => copyText($('zaloText').value, $('copyMsg'), 'Đã copy. Mở Zalo và dán vào khung chat với người xử lý.'));
+    $('result1').querySelector('details').addEventListener('toggle', e => {
+      const slot = $('qr1Slot');
+      if (e.target.open && !slot.dataset.ready) { slot.dataset.ready = '1'; renderQR(slot, 49000, 'TBSB ' + String(Math.floor(1000 + Math.random() * 9000))); }
+    });
+
+    $('tabBtn1').addEventListener('click', () => showTab(1));
+    $('tabBtn2').addEventListener('click', () => showTab(2));
+
+    $('parseCase').addEventListener('click', () => {
+      const c = caseFromLine($('caseText').value);
+      const m = $('caseMsg');
+      if (c) { fillCase(c); m.style.color = 'var(--good)'; m.textContent = `Đã đọc yêu cầu ${c.code}.`; return; }
+      const p = parseCoords($('caseText').value);
+      if (!p.error) { fillCase({ lat: p.lat, lng: p.lng, road: parseInt($('c_road').value, 10), shape: $('c_shape').value, mt: num($('c_mt').value), sau: num($('c_sau').value), ctType: 'none' }); m.style.color = 'var(--warn)'; m.textContent = 'Chỉ tìm thấy tọa độ, hãy nhập thêm kích thước.'; return; }
+      m.style.color = 'var(--bad)'; m.textContent = 'Không tìm thấy dòng #SBG hay tọa độ trong nội dung đã dán.';
+    });
+    $('fromTab1').addEventListener('click', () => {
+      const f2 = readForm();
+      const err = validate(f2);
+      if (err) { $('caseMsg').style.color = 'var(--bad)'; $('caseMsg').textContent = 'Tab Tra cứu chưa đủ thông tin: ' + err; return; }
+      fillCase({ code: $('orderCode').textContent || makeOrderCode(), lat: f2.lat, lng: f2.lng, mt: f2.mt, sau: f2.sau, shape: f2.shape, road: f2.road, zone: f2.zone, ctType: f2.ctType, ctArea: f2.ctArea, ctPct: f2.ctPct });
+      $('caseMsg').style.color = 'var(--good)'; $('caseMsg').textContent = 'Đã lấy yêu cầu từ tab Tra cứu.';
+    });
+    ['c_lat', 'c_lng', 'c_mt', 'c_sau'].forEach(id => $(id).addEventListener('change', () => refreshTab2(true)));
+    $('c_shape').addEventListener('change', () => { $('c_shapeK').value = fmt(SHAPE[$('c_shape').value].k, 2); updateShapeHint(); refreshTab2(true); });
+    $('c_shapeK').addEventListener('change', () => { updateShapeHint(); refreshTab2(true); });
+    ['c_road', 'c_zone'].forEach(id => $(id).addEventListener('change', () => refreshTab2(true)));
+    document.querySelectorAll('input[name="mtab"]').forEach(r => r.addEventListener('change', renderMethods));
+    $('x_type').addEventListener('change', () => { syncXUnit(); renderMethods(); });
+    $('m_ex').addEventListener('input', renderMethods); $('m_ex').addEventListener('change', renderMethods);
+    ['m_inc', 'm_res'].forEach(id => { $(id).addEventListener('input', () => { renderMethods(); renderTicket(); }); $(id).addEventListener('change', () => { renderMethods(); renderTicket(); }); });
+    $('x_use').addEventListener('click', () => {
+      const e = readEx(); if (!Number.isFinite(e.V)) return;
+      $('f_ct').value = String(Math.round(e.V));
+      $('f_ct').dataset.desc = `${CT_NAME[e.type]}, sàn ${fmt(e.floor, 0)} m², hao mòn ${fmt(e.dep * 100, 0)}%`;
+      renderTicket(); renderMethods();
+      $('f_ct').scrollIntoView({ behavior: 'smooth', block: 'center' });
+    });
+    ['c_code', 'c_area', 'f_unit', 'f_ct', 'f_ratio', 'f_band', 'f_cut', 'f_note'].forEach(id => $(id).addEventListener('input', () => { renderMethods(); renderTicket(); }));
+    $('f_ct').addEventListener('input', () => { $('f_ct').dataset.desc = num($('f_ct').value) > 0 ? 'Theo ghi nhận của người xử lý' : 'Đất trống'; });
+    $('f_qh').addEventListener('change', () => { $('cutWrap').hidden = $('f_qh').value !== 'part'; renderTicket(); });
+    $('exportBtn').addEventListener('click', exportTicket);
+    $('closeImg').addEventListener('click', () => { $('imgModal').hidden = true; });
+    $('dlAgain').addEventListener('click', tryDownload);
+    $('shareImg').addEventListener('click', shareImg);
+
+    $('openSettings').addEventListener('click', () => { loadSettingsForm(); $('settings').hidden = false; });
+    $('closeSettings').addEventListener('click', () => { $('settings').hidden = true; });
+    $('saveSettings').addEventListener('click', saveSettings);
+    $('syncCsv').addEventListener('click', () => syncCsv(false));
+    $('useSample').addEventListener('click', () => { applyData(SAMPLE.slice(), 'sample'); $('syncMsg').style.color = 'var(--muted)'; $('syncMsg').textContent = 'Đã quay về 20 điểm mẫu.'; });
+    $('loadPaste').addEventListener('click', () => {
+      const list = rowsToData(parseCSV($('s_paste').value));
+      const m = $('syncMsg');
+      if (!list.length) { m.style.color = 'var(--bad)'; m.textContent = 'Không đọc được dòng hợp lệ. Kiểm tra đủ 7 cột và tọa độ đặt trong dấu ngoặc kép.'; return; }
+      applyData(list, 'sheet'); store.set('tbsb_cache', list);
+      m.style.color = 'var(--good)'; m.textContent = `Đã nạp ${list.length} điểm từ nội dung dán.`;
+    });
+    document.addEventListener('keydown', e => { if (e.key === 'Escape') { $('settings').hidden = true; $('imgModal').hidden = true; } });
+
+    // Yêu cầu mẫu cho tab quản trị để thông báo có nội dung ngay khi mở
+    fillCase({ code: 'TBSB-2417', lat: 18.6702, lng: 105.6985, mt: 6, sau: 32, shape: 'VU', road: 2, ctType: 'c4', ctArea: 70, ctPct: 50 });
+    $('f_note').value = 'Thửa vuông vắn, đường bê tông 6m ô tô tránh. Phần sâu sau 25m tính 60% đơn giá. Cần đối chiếu diện tích đất ở trên giấy chứng nhận.';
+    renderTicket();
+
+    run();                                            // hiện kết quả mẫu ngay khi mở
+    showTab(store.get('tbsb_tab', 1) === 2 ? 2 : 1);
+    if (settings.csv) syncCsv(true);
+  }
+  init();
+})();
+</script>
+</body>
+</html>
